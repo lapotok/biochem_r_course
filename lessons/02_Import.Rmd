@@ -1,16 +1,6 @@
 ---
 title: "Статистика в `R` для биохимиков"
 date: "`r format(Sys.Date(), '%Y.%m.%d')`"
-output: 
-  html_document:
-    dev: 'svg'
-    toc: true
-    toc_depth: 3
-    toc_float: 
-      toc_collapsed: false
-    number_sections: true
-    css: ../style.css
-    
 ---
 
 ```{r setup, include=FALSE}
