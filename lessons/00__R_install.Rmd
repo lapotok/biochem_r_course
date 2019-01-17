@@ -1,0 +1,36 @@
+---
+title: "Установка R"
+output: html_notebook
+---
+
+# Установка базового пакета и RStudio
+
+1. Установить `R-base` последней версии ([Windows](https://cran.r-project.org/bin/windows/base/), [MacOS](https://cran.r-project.org/bin/macosx/))
+2. Установить `R-tools` последней версии ([Windows](https://cran.r-project.org/bin/windows/Rtools/), [MacOS (clang, gfortran)](https://cran.r-project.org/bin/macosx/tools))
+3. Установить `RStudio` последней версии для своей операционной системы ([Windows/MacOS](https://www.rstudio.com/products/rstudio/download/#download))
+
+## Возможные проблемы
+
+1. Русские имена в пути установки, решение - поставить в папку C:/R
+2. Locale
+
+```bash
+echo "export LANG=en_US.UTF-8" >> ~/.bashrc && echo "export LC_ALL=en_US.UTF-8" >> ~/.bashrc && source ~/.bashrc
+```
+
+Еще, если жалуется на отсутствие gfortran, решение для MacOS (если R-tools не поможет)
+
+```bash
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install gcc # (gcc49, если старый mac)
+```
+
+Или тут еще есть ряд советов (https://thecoatlessprofessor.com/programming/)
+
+# Установка необходимых пакетов
+
+Выполнить команду в `R`
+
+```rw
+source('https://tiny.cc/lpt_rpkgs')
+```

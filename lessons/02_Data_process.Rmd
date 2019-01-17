@@ -1,0 +1,150 @@
+---
+title: "Подготовка данных в R"
+output: 
+#  word_document
+  html_document
+---
+<style>
+h1, h2, h3, p, li {font-family: Fira Sans, Myriad,Arial;}
+pre.r, code {font-family:Consolas,monaco,monospace; background-color: #fdfdfd;}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, eval=F, comment = "")
+# делаем картинки поменьше в rnotebook
+library(repr)
+options(repr.plot.width=3, repr.plot.height=3)
+```
+
+## Подготовка данных
+
+Любой анализ проще сделать в "окошечной" программе на готовых данных. 
+
+А вот свести воедино данные, перевести их в правильный формат для анализа - это самое сложное. Пример - много спектров.
+
+* Tidy data
+
+```{r}
+data(iris)
+str(iris) # самая полезная функция для анализа объектов
+```
+
+* Импорт из разных форматов (ссылки для чтения)
+
+```{r eval = F}
+read.table()
+readxl::read_excel() # sheet, na, range, skip
+readr::read_csv()
+gsheet::gsheet2tbl()
+```
+
+* Пустые значения
+
+```{r eval = F}
+naniar::vis_miss()
+naniar::replace_with_na_at()
+na.omit()
+is.na()
+is.null()
+```
+
+* Регистры текстовых значений и опечатки (unique, factor levels)
+
+```{r eval = F}
+# check
+unique(my_data$var)
+table(my_data$var)
+levels(my_data$my_factor)
+gghistogram(my_data$my_numbers)
+mean(my_data$var)
+my_data %>% summarise(n = n(), mean = mean(var), sd = sd(var))
+
+my_data =
+  my_data %>% 
+  mutate(my_factor = my_factor %>% as.factor(), 
+         my_num = my_num %>% as.numeric(),
+         my_char = my_char %>% as.character(),
+         my_percent = my_num * 100,
+         my_dec_change = my_dec_change %>% str_replacel(".", ",") %>% as.numeric(),
+         my_uppercase = my_uppercase %>% str_to_upper(),
+         my_to_be_trimmed = my_to_be_trimmed %>% str_trim()) %>%
+  select(-bullshit)
+
+full_join(df1, df2, by=""key)
+```
+
+```{r}
+# смотрим на данные
+DAAG::cuckoos %>% str()
+# значения
+DAAG::cuckoos %>% ggboxplot("species", "length", col="species", add="jitter")
+# нормальность
+DAAG::cuckoos %>% ggqqplot("length") # общая - среднее по больнице
+DAAG::cuckoos %>% ggqqplot("length", col = "species") # перекрываются
+DAAG::cuckoos %>% ggqqplot("length", facet.by = "species") # отлично, но диапазоны значений разные, плохо видно
+# шкалируем значения (z-трансформация:  x_scaled = (x-mean(x))/sd(x)  )
+DAAG::cuckoos %>% 
+  mutate(length_scaled = scale(length)) %>% 
+  ggqqplot("length_scaled", facet.by = "species") # мы шкалировали все значения без разбивки на группы
+DAAG::cuckoos %>% 
+  group_by(species) %>% # разделяем на группы
+  mutate(length_scaled = scale(length)) %>% # шкалируем внутри каждой группы, т.е. среднее в каждой группе теперь 0
+  ggqqplot("length_scaled", facet.by = "species")
+```
+
+* wide to long, long to wide (пример того, зачем может быть надо)
+
+```{r}
+il = 
+  iris %>% 
+  gather("var", "value", -Species)
+
+il %>% 
+  group_by(Species) %>% 
+  mutate(n = row_number()) %>% 
+  spread("var", "value")
+
+```
+
+## Автоматизация действий в R
+
+* Циклы и условия
+
+```{r}
+for (i in 1:10){
+  print(i) # что-то делаем
+}
+
+for (i in 1:10) print(i) # если в одну строчку - можно проще
+
+# теперь что-то полезное: посчитаем сумму квадратов отклонений
+v = c(5, 6, 3, 4, 5)
+mean_v = mean(v) # запоминаем, чтобы не повторять действие много раз
+output = numeric(length(v)) # запоминаем результаты в вектор output нужной длины
+for (v_i in v){ # перебираем номера элементов из вектора v
+  output[i] = (v_i - mean_v)^2 # для каждого элемента считаем квадрат отклонений от среднего
+}
+output
+
+# но можно проще - векторизованные операции
+output = (v - mean_v)^2
+
+
+# проверяем условия
+length(output)
+
+length(output) > 0
+
+if ( length(output) > 0 ){
+  print("Урра, у нас ненулевой вектор!")
+} else {
+  print("Упс, почему-то он обнулился!!!")
+}
+
+ouput_is_empty = ifelse( length(output) > 0, "не пустой", "пустой")
+
+output > 1
+
+output[ output > 1 ]
+```
+

@@ -1,0 +1,388 @@
+---
+title: "Заметка на тему DoE в R"
+output:
+  word_document: default
+  html_document:
+    keep_md: yes
+---
+<style>
+h1, h2, h3, p, li {font-family: Fira Sans;}
+pre.r, code {font-family: source code pro;Fira Sans; background-color: #fdfdfd;}
+</style>
+
+# Библиотеки
+
+Загружаем нужные библиотеки
+
+```{r libs, warning=F, message=F}
+library(tidyverse)
+library(magrittr)
+library(ggpubr)
+library(ggrepel)
+library(patchwork)
+library(kableExtra)
+library(glue)
+library(gglabeledcontour)
+library(broom)
+library(crayon)
+library(rsm)
+library(pid)
+```
+```{r functions, include=F, cache=T}
+# encode data (as many data points as one may have)
+rsm_encode_data = function(d, factors = colnames(data)){
+  # set up encoding
+  d.extremes = data.frame(n = 1:2)
+  for (factor in factors) d.extremes[[factor]] = range(d[[factor]])
+  # 2. extreme values -> (-1, 1)
+  d.codeddata = suppressWarnings( d.extremes %>% select(-n) %>% coded.data() )
+  d.coding = d.codeddata %>% codings()
+  # 3. apply to entire dataset
+  d.enc = d %>% val2code(d.coding)
+  attr(d.enc, "codings") = d.coding
+  attr(d.enc, "rsdes") = attr(d.codeddata, "rsdes")
+  class(d.enc) = c("coded.data", "data.frame")
+  return(d.enc)
+}
+
+rsm_encode_formula = function(formula, factors){
+  formula_enc = formula
+  reserved = "*,+TWI()PQ()SO()FO()"
+  for(i in 1:length(factors)){
+    if(str_detect(reserved, fixed(factors[i]))) stop(glue("Factor name {factors[i]} coincides with formula special caracters!"))
+    formula_enc = str_replace_all(formula_enc, factors[i], paste("x", i, sep=""))
+  }
+  return(formula_enc)
+}
+
+rsm_summary = function(model, print=T){
+  model_summary = suppressWarnings(summary(model))
+  results = list()
+  results$quality = model %>% glance() %>% as.data.frame()
+  rownames(results$quality) = ""
+  results$anova_lof = model_summary %>% .$lof
+  results$coefficients = model_summary %>% .$coefficients
+  if (!is.null(model_summary %>% .$canonical))
+    results$stationary_point = model_summary %>% .$canonical %>% .$xs %>% code2val(model$coding)
+  out = capture.output({st = try(steepest(model), silent = T)}) # check try
+  if (class(st) != "try-error")
+    results$steepest = st[, colnames(st)!= "|"]
+  results$data = model$data
+  
+  if (print){
+    cat(bold("\nКачество модели\n"))
+    print(results$quality)
+    cat(bold("\nКоэффициенты линейной регрессии (вклад признаков и их взаимодействие)\n"))
+    print(results$coefficients)
+    cat(bold("\nДисперсионный анализ (достоверность эффекта)\n"))
+    print(results$anova_lof)
+    if (!is.null(model_summary %>% .$canonical)){
+      cat(bold("\nПараметры оптимального значения\n"))
+      print(results$stationary_point) 
+    }
+    cat(bold("\nКратчайший путь к оптимуму\n"))
+    print(results$steepest) 
+  }
+  
+  invisible(results)
+}
+
+rsm_build_models = function(d, response, factors, formulas = "default", suppress_warnings=T){
+  d.enc = rsm_encode_data(d, factors)
+  if (formulas == "default"){
+    formulas = c(
+      paste(response, " ~ ", "FO(",paste(factors, collapse=","),")", sep=""), # "Profit ~ FO(Price, Height)"
+      paste(response, " ~ ", "FO(",paste(factors, collapse=","),")", " + TWI(",paste(factors, collapse=","),")", sep=""), # "Profit ~ FO(Price, Height) + TWI(Price, Height)"
+      paste(response, " ~ ", "SO(",paste(factors, collapse=","),")", sep="") # "Profit ~ SO(Price, Height)"
+    )
+  }
+  models = list()
+  for (formula in formulas){
+    #suppressWarnings(rsm(rsm_encode_formula(formula, factors), data=d.enc))
+      if(suppress_warnings){
+             models[[formula]] = suppressWarnings(rsm(rsm_encode_formula(formula, factors), data=d.enc))
+      } else {
+             models[[formula]] = rsm(rsm_encode_formula(formula, factors), data=d.enc)
+      }
+    if ("data" %in% names(models[[formula]])) models[[formula]]$data = d.enc
+  }
+  models = tibble(formula = formulas, model = models)
+  models %<>% 
+    mutate(AdjR = map_dbl(model, ~ glance(.x) %>% .$adj.r.squared)) %>% 
+    mutate(AdjR =  ifelse(is.nan(AdjR), -Inf, AdjR))
+  return(models)
+}
+
+rsm_predict = function(model){
+  factors = model$data %>% codings() %>% names()
+  n_factors = length(factors)
+  plot_grid_enc = matrix(rep(seq(-2,2,l=100), n_factors), ncol=n_factors) %>% as.data.frame()
+  colnames(plot_grid_enc) = factors
+  plot_grid_enc = expand.grid(plot_grid_enc)
+  plot_grid_dec = 
+    plot_grid_enc %>% 
+    code2val(codings(model$data)) %>% 
+    mutate(Profit = predict(model, newdata = plot_grid_enc))
+  return(plot_grid_dec)
+}
+
+# plot contours for 2 factor design response
+rsm_plot_contours = function(d, x="x", y="y", z="z", model){
+  require(ggplot2)
+  require(gglabeledcontour)
+  g = ggplot(data = d, aes_string(x=x, y=y)) +
+  geom_raster(aes_string(fill=z)) +
+  geom_contour(aes_string(z=z), linetype="dotted", alpha=.5, binwidth=10) +
+  suppressWarnings(geom_contour_label(aes_string(z=z), size=2.5, alpha=.5)) +
+  scale_fill_gradientn(z, colours = terrain.colors(50)) +
+  coord_cartesian(expand = F, xlim = range(d[[x]]), ylim=range(d[[y]])) +
+  theme_minimal()
+  
+  if(!is.null(model)){
+    points = model$data %>% code2val(codings(model$data))
+    g = g + geom_point(data=points, aes_string(x=x, y=y), size=2, alpha=.7)
+    summ = model %>% rsm_summary(print = F)
+    if("steepest" %in% names(summ)){
+      for(i in 1:(nrow(summ$steepest)-1)){
+        g = g + geom_path(data=summ$steepest[i:(i+1),], aes_string(x=x, y=y), col="blue", alpha=.5, arrow=arrow(length = unit(0.1, "inches"), type = "closed", ends = "last"))
+      }
+    }
+    if("stationary_point" %in% names(summ))
+      g = g + geom_point(data=data.frame(x=summ$stationary_point[[x]], y=summ$stationary_point[[y]]), aes_string(x="x", y="y"), size=3, shape=24, fill="brown", col="black", alpha=.7)
+  }
+  return(g)
+}
+```
+```{r settings, include=F}
+knitr::opts_chunk$set(comment=NA)
+```
+
+# Почему нужен дизайн эксперимента?
+
+Рассмотрим задачу выбора оптимального сочетания на примере. Для этого я выбрал симулятор эксперимента `grocery` из курса PID [[1](https://learnche.org/pid/), [2](https://docs.google.com/document/d/1HbQF94ovmWfJVsBD2XSYQSzowI1-Fy6ztIhExRHedU8/pub)]. В этом эксперименте исследуется зависимость выручки за товар от высоты расположения его на полке в магазине (`Height`) и от его цены (`Price`). Генератор выдает значения для каждого сочетания признаков с небольшим разбросом, имитируя дисперсию реальных значений.
+
+Так выглядит искомая зависимость (но мы этого не знаем). Мы выбираем ту или иную стратегию пространства сочетаний этих двух факторов.
+
+```{r echo=F, message=F, warning=F, cache=T}
+# true data
+true_plot_grid = expand.grid(Price=seq(3, 3.8, l=100), Height=seq(20, 250, l=100))
+
+grocery_noisy = function(P, H){
+  a_coded <- (P - 3.2)/0.2
+  b_coded <- (H - 50)/100
+  y = round((18 * a_coded + 12 * b_coded - 7 * a_coded * 
+    a_coded - 6 * b_coded * b_coded - 8.5 * a_coded * 
+    b_coded + 60) * 10 + rnorm(1) * 2)
+  return(y)
+}
+
+grocery_exact = function(P, H){
+  a_coded <- (P - 3.2)/0.2
+  b_coded <- (H - 50)/100
+  y = round((18 * a_coded + 12 * b_coded - 7 * a_coded * 
+    a_coded - 6 * b_coded * b_coded - 8.5 * a_coded * 
+    b_coded + 60) * 10)
+  return(y)
+}
+
+true_plot_grid %<>% mutate(Profit = grocery_exact(P=Price,H=Height))
+top = true_plot_grid %>% filter(Profit == max(Profit)) %>% arrange(desc(Price)) %>% head(1)
+
+true_plot = 
+  rsm_plot_contours(true_plot_grid, "Price", "Height", "Profit", model = NULL) +
+  ggtitle("Истинная зависимость") + 
+  geom_point(data=top, aes(x=Price, y=Height), size=5, shape=24, fill="brown", col="black") +
+  geom_text(data=top, aes(x=Price, y=Height, label=paste("$",Profit, sep="")), position = position_nudge(.04, -1), col="darkgreen", size=3)
+```
+```{r echo=F, cache=T}
+true_plot
+```
+
+Задача найти оптимальное сочетание параметров, осуществив как можно меньше переборов.
+
+## Подход перебора условий по каждому признаку отдельно
+
+Обычно мы сначала выбираем оптимальное значение одного признака (при базовых значениях остальных параметров), затем с лучшим из полученных значений.
+
+Допустим, мы начали с базовых условий и начали поднимать, либо опускать цену до тех пор, пока не не увидим падение профита. Когда мы подобрали оптимальную цену, начинаем изменять (вверх и вниз) положение продукта на полке, пока не увидим падение профита. Наблюдаемое при этом максимальное значение профита и будем считать оптимальным сочетанием цены и высоты.
+
+```{r echo=F, cache=T}
+Ps=seq(3.25, 3.55, l=5)
+Hs=seq(80, 170, l=5)
+points = 
+  data.frame(
+    P = c(Ps[5:1], rep(Ps[2], 4)),
+    H = c(rep(Hs[4],5), Hs[c(1,2,3,5)])
+  )
+points %<>% mutate(Y = grocery_exact(P=P, H=H))
+true_plot +
+  geom_segment(
+    data=
+      data.frame(
+        x=Ps[c(4,4,3,2,2,2,2,2)], 
+        xend=Ps[c(5,3,2,1,2,2,2,2)]+c(-0.007,0.007,0.007,0.007,0,0,0,0), 
+        y=Hs[c(4,4,4,4,4,4,3,2)], 
+        yend=Hs[c(4,4,4,4,5,3,2,1)]+c(0,0,0,0,-2,2,2,2)), 
+    aes(x=x, xend=xend, y=y, yend=yend),
+    col="blue",
+    arrow=arrow(length = unit(0.07, "inches"), type = "closed", ends = "last"), size=.5) +
+  geom_point(data=points, aes(x=P, y=H), size=3, alpha=.7) +
+  geom_point(data=points %>% filter(P == Ps[2] & H == Hs[2]), aes(x=P, y=H), size=5, shape=1, fill=NA, col="red") +
+  geom_point(data=points %>% filter(P == Ps[4] & H == Hs[4]), aes(x=P, y=H), size=5, shape=1, fill=NA, col="black") +
+  geom_text(data=points, aes(x=P, y=H, label=paste("$",Y, sep="")), position = position_nudge(.03, -4), col="darkgreen", size=3)
+```
+
+Оптимальным будет объявлено сочетание Price = 3.325, Height = 102.5, что, как видно из графика, не самое лучшее решение.
+
+## Поиск оптимального значения при помощи дизайна эксперимента
+
+Для начала возьмем 4 точки в наиболее разумные пределах (тех же, что и при переборе), но измерения надо проводить в рандомном порядке.
+
+```{r echo=F, cache=T}
+round1 = expand.grid(Price=c(3.25, 3.55), Height=c(80, 170))
+set.seed(1543)
+round1 %<>% mutate(LogicalOrder = row_number(), 
+                   RunOrder = sample(1:nrow(round1)),
+                   Profit = grocery_noisy(P=Price,H=Height))
+round1
+```
+
+Теперь строим и анализируем модели. Сравниваем график, на котором показана истинная зависимость, с графиком, содержащим предсказанную зависимость (на ней красным пунктиром помечены контурные линии истинной зависимости).
+
+```{r echo=F, fig.height=5, fig.width=11, cache=T}
+models = rsm_build_models(round1, "Profit", c("Price", "Height"), suppress_warnings = T)
+model = models %>% filter(AdjR == max(AdjR)) %>% .$model %>% .[[1]]
+plot_grid_dec = rsm_predict(model)
+
+true_plot + 
+  rsm_plot_contours(plot_grid_dec, "Price", "Height", "Profit", model) +
+  geom_contour(data=true_plot_grid, aes_string(x="Price", y="Height", z="Profit"), binwidth=20, col="red", linetype="dashed", alpha=.4) + ggtitle("Предсказанная зависимость")
+```
+
+Из трех моделей (FO - линейная комбинация факторов, FO+TWI - то же + взаимодействия, SO=FO+TWI+PQ - то же + квадраты значений) лишь самая (FO) простая оказалась применима (см. _adjusted $R^2$_) 
+
+```{r cache=T}
+models
+```
+
+Вывод: нелинейность взаимосвязи не получилось уловить. Это может быть либо из-за недостаточного количества точек, либо из-за удаления от точки максимума... либо ее вообще могло не быть. Зато, на основе линейных
+
+Хорошим правилом является использование центроида (точки с усредненными по всем факторам значениями). А лучше делать три реплики центроида, чтобы еще получить представление о величине разброса значений. Добавим эти точки и посмотрим, как изменилось предсказание.
+
+```{r echo=F, fig.height=5, fig.width=11, cache=T}
+add_point = function(data, Price, Height){
+  data %>% bind_rows(data.frame(
+  Price = Price,  Height = Height, LogicalOrder = max(data$LogicalOrder)+1, RunOrder = max(data$LogicalOrder)+1) %>% 
+    mutate(Profit = grocery_noisy(P=Price, H=Height)))
+}
+
+set.seed(1543)
+round1_centr = 
+  round1 %>% 
+  add_point(Price=3.4, Height=125) %>% 
+  add_point(Price=3.4, Height=125) %>% 
+  add_point(Price=3.4, Height=125)
+
+round1_centr %>% filter(LogicalOrder>4)
+
+models = rsm_build_models(round1_centr, "Profit", c("Price", "Height"))
+model = models %>% filter(AdjR == max(AdjR)) %>% .$model %>% .[[1]]
+plot_grid_dec = suppressWarnings(rsm_predict(model))
+
+true_plot + 
+  rsm_plot_contours(plot_grid_dec, "Price", "Height", "Profit", model) +
+  geom_contour(data=true_plot_grid, aes_string(x="Price", y="Height", z="Profit"), binwidth=20, col="red", linetype="dashed", alpha=.4) + ggtitle("Предсказанная зависимость")
+```
+
+
+
+Добавим еще набор точек, исходя из графика (ибо лучшая модель не смогла построить кратчайший путь).
+
+```{r echo=F, fig.height=5, fig.width=11, cache=T}
+set.seed(1543)
+round2 = 
+  round1_centr %>% 
+  add_point(Price = 3.45,  Height = 40) %>% 
+  add_point(Price = 3.45-0.1,  Height = 40-30)%>% 
+  add_point(Price = 3.45-0.1,  Height = 40+30)%>% 
+  add_point(Price = 3.45+0.1,  Height = 40-30)%>% 
+  add_point(Price = 3.45+0.1,  Height = 40+30)
+
+round2 %>% filter(LogicalOrder>7)
+
+models = rsm_build_models(round2, "Profit", c("Price", "Height"))
+model = models %>% filter(AdjR == max(AdjR)) %>% .$model %>% .[[1]]
+plot_grid_dec = suppressWarnings(rsm_predict(model))
+
+true_plot + 
+  rsm_plot_contours(plot_grid_dec, "Price", "Height", "Profit", model) +
+  geom_contour(data=true_plot_grid, aes_string(x="Price", y="Height", z="Profit"), binwidth=20, col="red", linetype="dashed", alpha=.4) + ggtitle("Предсказанная зависимость")
+```
+
+В итоге мы нашли оптимальное значение. Из-за разброса полученных значений наши предсказания могут немного варьировать. Это можно посмотреть по точности предсказания (интервалы предсказания).
+
+```{r echo=F, cache=T}
+predict(model, 
+        newdata=model %>% rsm_summary(print = F) %>% .$stationary_point %>% t() %>% as.data.frame() %>% val2code(model$coding), interval = "prediction")
+```
+
+
+# Основные принципы дизайна эксперимента
+
+* менять нужно сразу все параметры, т.к. возможно взаимодействие между ними (разный характер влияния одного фактора для разных уровней другого)
+* необходимо измерять запланированные точки в случайном порядке, дабы минимизировать влияние неизвестных факторов, которые могут меняться от эксперимента к эксперименту; также полезно замечать все те переменные, которые могли меняться, но не относятся к области нашего интереса (например, день/оператор/прибор), чтобы учесть эти переменные для уточнения модели (blocking variables)
+* существует великое множество подходов для выбора точек
+  * для перебора большого количества факторов с целью найти ключевые (скрининг) подходят дизайны типа "частичный факториал", при которых нельзя сделать хорошие предсказания и сделать далеко идущие выводы о взаимодействии факторов, но можно отсеять ненужные
+  * наиболее точное предсказание позволяет дать дизайн "полный факториал" с центроидами и стар-пойнтами, который стоит применять в случае, когда уже ясно, какие факторы нужны и надо максимально точно оценить положение оптимального сочетания параметров
+* в дизайнах типа "частичный факториал" из-за небольшого количества данных и особенностей кодирования переменных для линейной регрессии и дисперсионного анализа смешиваются между собой простые эффекты и более сложные, поэтому приходится исходить из предположения, что квадратичные эффекты и эффекты взаимодействия незначительны
+
+# Использование стандартных функций пакетов `rsm` и `pid`
+
+* выбор дизайна (набора точек и их порядка) для эксперимента - `FrF2::FrF2()`
+* проведение эксперимента в определенном порядке
+* кодирование данных (абсолютные значения факторов переводим в диапазон от -1 до +1)
+* построение моделей (`rsm()`, `lm()`)
+
+```{r}
+# возьмем в качестве данных финальный набор точек из рассмотренного примера
+d = round2
+d %>% head()
+
+# для линейной регрессии необходимо сперва закодировать наши переменные
+# 1. для начала найдем крайние значения признаков
+d.extremes = data.frame(n = 1:2)
+d.extremes[["Price"]] = range(d[["Price"]])
+d.extremes[["Height"]] = range(d[["Height"]])
+# 2. генерируем систему кодирования крайних значений -> (-1, 1)
+d.codeddata = d.extremes %>% select(-n) %>% coded.data()
+d.coding = d.codeddata %>% codings()
+# 3. проводим кодирование данных (создаем объект класса coded.data)
+d.enc = d %>% val2code(d.coding)
+attr(d.enc, "codings") = d.coding
+attr(d.enc, "rsdes") = attr(d.codeddata, "rsdes")
+class(d.enc) = c("coded.data", "data.frame")
+d.enc %>% head() # полученный объект
+d.enc %>% as.data.frame() %>% head() # а вот как эта таблица на самом деле выглядит
+
+# строим модель взаимоствязей, используя названия кодированных переменных в формуле
+model_SO = rsm(Profit ~ SO(x1, x2), data = d.enc) # модель: линейные предикторы, вз-я, квадраты
+model_SO %>% glance() # качество
+model_SO %>% summary() # все параметры
+
+experimental_points = 
+  model$data %>% 
+  code2val(codings(model$data))
+
+stationary_point = 
+  model %>% 
+  summary() %>% 
+  .$canonical %>% 
+  .$xs %>% 
+  code2val(codings(model$data)) %>% 
+  t() %>% 
+  as.data.frame()
+
+contour(model_SO, ~ x1 + x2)
+points(experimental_points, pch=16)
+points(stationary_point, pch=17, col="red")
+```

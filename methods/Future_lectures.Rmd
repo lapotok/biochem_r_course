@@ -1,0 +1,1857 @@
+---
+title: 'Курс по статистике: практикум урок 2'
+author: "Альтшулер Евгений"
+output:
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+    toc_depth: 3
+header-includes: \usepackage[russian]{babel}
+---
+<style type="text/css">
+body, td {font-size: 14px;}
+code.r, pre{font-size: 12px;}
+</style>
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, eval=F, comment = "")
+# делаем картинки поменьше в rnotebook
+library(repr)
+options(repr.plot.width=3, repr.plot.height=3)
+```
+
+# Текущая версия курса
+
+## Список пакетов для установки
+
+```{r eval=F}
+# source('https://raw.githubusercontent.com/lapotok/biochem_statistics/master/2018/resources.R')
+list.of.packages <- c('ggplot2', 'scales', 'plotly', 'openxlsx', 'httr', 'rvest', 'ggpubr', 'lattice', 'reshape2', 'repr', 'car', 'sinaplot', 'cowplot', 'dplyr', 'curl', 'dunn.test', 'ggforce', 'gridExtra', 'knitr', 'multcomp', 'drc', 'RColorBrewer', 'rmarkdown', 'boot', 'nlme', 'caret', 'ipred', 'e1071', 'ggpubr', 'PoweR', 'latex2exp', 'dimRed')
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+if (!("Biobase" %in% installed.packages()[,"Package"])) BiocManager::install("Biobase", version = "3.8")
+
+if (length(new.packages) == 0) {
+  message('No packages need to be installed.')
+} else {
+  message(paste(length(new.packages), 'packages need to be installed.'))
+  install.packages(new.packages)
+}
+```
+
+## Чем прекрасен R?
+
+* бесплатный
+* поддерживает Windows, Mac, Linux
+* управление коммандами - проще следовать инструкциям из мануалов, причем удобно гуглить, начиная свой запрос со слов
+    + r project
+    + r language
+    + r environment
+    + https://rseek.org/
+* язык программирования - значит можно автоматизировать действия
+
+## Полезные источники по R
+
+* https://cran.cnr.berkeley.edu/doc/contrib/Shipunov-rbook.pdf
+* http://www.sthda.com/english/wiki/r-basics-quick-and-easy
+* http://personality-project.org/r/
+* http://mospolytech.ru/storage/b53b3a3d6ab90ce0268229151c9bde11/files/Mastitsky_and_Shitikov_2014.pdf
+* https://rmarkdown.rstudio.com/lesson-1.html
+* https://www.r-project.org/doc/bib/R-books.html
+* https://cran.r-project.org/doc/contrib/Seefeld_StatsRBio.pdf
+
+## Еще полезное по выбору статистических тестов и т.п.
+
+* http://www.dataanalytics.org.uk/Data%20Analysis/Statistics/choosing-your-stats-test.htm
+* https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3116565/
+* http://www.biochemia-medica.com/en/journal/20/1/10.11613/BM.2010.004
+* https://serialmentor.com/dataviz/directory-of-visualizations.html
+* http://www.wormbook.org/chapters/www_statisticalanalysis/statisticalanalysis.pdf
+
+## Установка R/RStudio vs ONLINE
+
+Официальные дистрибутивы (для всех систем, есть инструкции по установке)
+
+* R - базовая версия (https://cran.r-project.org/)
+* RStudio - оболочка для удобства (https://www.rstudio.com/products/rstudio/download/#download)
+
+Еще бывает несколько онлайн-версий
+
+* RNoteBook (https://rnotebook.io/)
+* https://rdrr.io/snippets/
+* http://www.tutorialspoint.com/execute_r_online.php
+
+## Работа в RNotebook (jupyter notebook) vs RStudio
+
+RNotebook
+
+* https://rnotebook.io -> Create new R notebook -> File -> New notebook -> R
+* ячейки: Code/Markdown
+* Enter - новая строка, Shift+Enter - запуск ячейки
+
+R, RStudio
+
+* Консоль, комманды, возвращение к предыдущим
+* Выполнение комманд из окна редактирования скриптов
+* Окна объектов, картинок, помощи...
+
+### Работа с переменными, вычисления
+* математические операторы и функции (+, -, ^, *, log, abs, mean)
+* переменные и как их называть
+```{r}
+my_variable = 1
+MyVariable = 1
+my.variable = 1
+```
+* присвоение значений переменным
+```{r}
+a = 1
+a=1
+a <- 1
+a = "kjfhs"
+a = 'kjfhs'
+```
+## Типы данных
+
+```{r}
+# number
+my_number = 1
+
+# character
+my_char = "bla\tbla\nbla"
+cat(my_char)
+
+# boolean
+my_bool1 = TRUE
+my_bool2 = FALSE
+
+# vector
+my_vector1 = 1:20
+# подмножество из вектора
+my_vector1[2:4]
+my_vector2 = c(1, 2, 30, 50, 100, 150)
+# выполняем операцию сравнения
+my_vector2 > 100
+# выбираем значения, отвечающие критерию my_vector2 > 40
+my_vector2[my_vector2 > 40]
+
+# factor vs vector
+# создаем вектор
+age = c("young", "middle-aged", "old", "Old", "young", "middle-aged", "middle-aged")
+age # просто перечень текстовых значений
+# преобразуем в фактор (текстовые значения в коды, текст отображается лишь для простоты восприятия)
+factor(age) # видим лишний уровень "Old", дублирующий "old"
+age = c("young", "middle-aged", "old", "old", "young", "middle-aged", "middle-aged")
+factor(age) # несортированный фактор
+factor(age, levels=c("young", "middle-aged", "old"), ordered = TRUE) # levels задает возрастающий порядок уровней
+
+# data.frame
+head(iris) # iris - встроенный пример таблицы данных
+```
+
+### Таблица данных - учимся создавать подтаблицы
+
+```{r}
+# первая строка
+iris[1,]
+# первый столбец
+iris[,1]
+
+# пробуем доставать разные строки, столбцы и значения на основе разных критериев
+iris[1:15,]
+iris[,1:3]
+iris[, c(1, 3, 5)]
+iris[, c("Petal.Width", "Species")]
+iris$Sepal.Length
+iris$Sepal.Length[1:10]
+iris$Species == "versicolor"
+iris$Petal.Length[iris$Species == "versicolor"]
+iris[iris$Species == "versicolor",]
+iris$Sepal.Length > 7
+iris[iris$Sepal.Length > 7,]
+```
+
+### Операции с векторами и таблицами
+
+```{r}
+# vectors
+my_vector2 = 1:10
+my_vector3 = (1:10)*10
+1:10*10
+(1:10)*10
+my_vector2 + my_vector3
+my_vector2 - 1
+(my_vector2)^2
+sum(my_vector2)
+my_vector2 > 3
+
+# tables
+iris_subset = iris[1:10, 1:4]
+apply(iris_subset, 1, sum) # суммируем построчно
+apply(iris_subset, 2, sum) # суммируем поколоночно
+iris_subset > 3.2
+```
+
+## Проверка нормальности распределения
+
+Будем проверять распределение эмпирических данных (`vers`) и сгенерированных, соответствующих нормальному (`nd`) и ненормальному (`nnd`) распределению.
+
+```{r}
+vers = iris[iris$Species == "versicolor","Sepal.Length"]
+
+# гистограмма
+hist(vers)
+?hist # справка
+hist(vers, breaks = 20)
+
+# кривая плотности вероятности распределения
+density(vers)
+plot(density(vers))
+rug(vers)
+stem(vers) # графический аналог описан тут http://www.dataanalytics.org.uk/Data%20Analysis/R%20Monographs/Dot%20Histogram.R
+
+# пример нормального распределения
+# для воспроизводимости генератора случайных чисел задаем "стартовое число"
+set.seed(123)
+nd = rnorm(100, mean=50, sd=5) # задаем желаемые параметры
+hist(nd,breaks=20)
+plot(density(nd))
+
+# пример НЕнормального распределения
+# для воспроизводимости генератора случайных чисел задаем "стартовое число"
+set.seed(123)
+nnd = rchisq(100, 20, 5) # задаем желаемые параметры
+hist(nnd,breaks=20)
+plot(density(nnd))
+
+# критерий нормальности - shapiro.test
+shapiro.test(vers)
+st = shapiro.test(vers)
+str(st)
+st$p.value
+st$p.value > 0.05 # TRUE => нормальное распределение
+shapiro.test(nnd)$p.value # < 0.05 => ненормальное распределение
+
+# визуальная оценка нормальности
+qqnorm(vers) # нормально
+qqline(vers)
+qqnorm(nnd) # ненормально
+qqline(nnd)
+```
+
+## Работаем с нормально распределенными данными
+
+```{r}
+# параметры нормального распределения
+mean(vers)
+sd(vers)
+
+# z-трансформация
+scale(vers)
+
+# сами пишем функцию для проведения z-трансформации
+# Версия 1 - длинная и поэтапная
+z_transformation = function(x){
+  step1 = mean(x)
+  step2 = x - step1
+  step3 = sd(x)
+  step4 = step2/step3
+  return(step4) # maybe just step4
+}
+
+# Версия 2 - лаконичная
+z_transformation = function(x) (x-mean(x))/sd(x)
+```
+
+Кстати, нашел отличную [статью](https://www.mathsisfun.com/data/standard-deviation.html) про то, почему стандантартное отклонение не есть сумма отклонений и не сумма модулей, а именно корень из суммы квадратов. 
+
+
+
+
+
+
+
+## Трансформация данных в нормальные (***)
+
+В пакете caret есть функция `preProcess`, в которой реализован ряд методов препроцессинга данных: "center", "scale", "BoxCox", "YeoJohnson", "expoTrans", "range", "knnImpute", "bagImpute", "medianImpute", "pca", "ica", "spatialSign", "zv", "nzv", "conditionalX".
+
+Из них "bagImpute", "pca", "ica", "spatialSign" у меня не получилось использовать (например, "pca" и "ica" нужны для одновременного преобразования групп переменных, а не по одной), а что с "bagImpute" и "spatialSign" пошло не так я так и не понял…
+
+Кроме того, из книги А.Б. Шипунова и др. "Наглядная статистика. Используем R!" я почерпнул еще несколько методов:
+
+Логарифмическое: `log(data + 1)`. Если распределение скошено вправо, может дать нормальное распределение. Может также делать более линейными зависимости между переменными и уравнивать дисперсии. «Боится» нулей в данных, поэтому рекомендуется прибавлять единицу.
+Квадратного корня: `sqrt(data)`. Похоже по действию на логарифмическое. «Боится» отрицательных значений. Обратное: `1/(data + 1)`. Эффективно для стабилизации дисперсии. «Боится» нулей.
+Квадратное: `data^2`. Если распределение скошено влево, может дать нормальное распределение. Линеаризует зависимости и выравнивает дисперсии.
+Логит: `log(p/(1-p))`. Чаще всего применяется к пропорциям. Линеаризует так называемую сигмовидную кривую.
+Кроме логит-преобразования, для пропорций часто используют и арксинус-преобразование, `asin(sqrt(p))`
+Ряд перечисленных в книге преобразований не работает с отрицательными значениям. Поэтому я сначала шкалирую переменную `(scale(x))`, а затем добавляю 3, чтобы > 99% значений стали положительными, а затем применяю вышеозначенные дополнительные преобразования.
+
+После всех трансформаций я снова провожу финальное шкалирование `(scale(x))`.
+
+Функция строит график типа `barplot` с нанесенными поверх него точками данных, а также на графике подписывается значение  `p-level` для теста `shapiro.test(x)`, с помощью которого можно определить нормальность распределения трансформированных данных. Нулевая гипотеза этого теста заключается в том, что данные распледелены нормально (подписи красного цвета), а если  `p-level < 0.1`, то значит эта гипотеза отвергается и распределение нельзя считать нормальным (подписи серого цвета).
+
+Как правило, метод BoxCox справляется лучше всего с задачей.
+
+```{r eval=T, message=F, warning=F}
+library(caret)
+library(ipred)
+
+compareTransformations = function(var.nonscaled){
+  
+  if (is.data.frame(var.nonscaled)) var.nonscaled = var.nonscaled[[1]]
+  if (is.matrix(var.nonscaled)) var.nonscaled = as.numeric(var.nonscaled)
+  
+  var.scaled = scale(var.nonscaled)
+  len = length(var.nonscaled)
+  
+  # different types of transformations
+  pp.list = c( "BoxCox", "YeoJohnson", "expoTrans", "range", "knnImpute", "medianImpute", "zv", "nzv", "conditionalX")
+  
+  dt = data.frame(transform=rep("scaled",len), data=var.scaled)
+  
+  for (pp in pp.list){
+    pp.obj = preProcess(x=data.frame(x=var.nonscaled), method=pp)
+    pp.res = predict(pp.obj, data.frame(x=var.nonscaled))
+    dt = rbind(dt, data.frame(transform=rep(pp,len),data=scale(pp.res[,1])))
+  }
+  
+  # log
+  dt = rbind(dt, data.frame(transform=rep("log",len),data=scale(log(var.scaled+3))))
+  # sqrt
+  dt = rbind(dt, data.frame(transform=rep("sqrt",len),data=scale(sqrt(var.scaled+3))))
+  # 1/(data+1)
+  dt = rbind(dt, data.frame(transform=rep("1/(data+1)",len),data=scale(1/(var.scaled+1))))
+  # data^2
+  dt = rbind(dt, data.frame(transform=rep("data^2",len),data=scale(var.scaled^2)))
+  # logit
+  dt = rbind(dt, data.frame(transform=rep("logit",len),data=scale((var.scaled+3)/(1-(var.scaled+3)))))
+  # arcsin
+  dt = rbind(dt, data.frame(transform=rep("arcsin",len),data=scale(asin(scale(sqrt(var.scaled+3))/3))))
+  
+  dt.sh = c()
+  dt.list = list()
+  for (pp in unique(dt[,1])){
+    dt.list[[pp]] = dt[dt[,1]==pp,2]
+    dt.sh = c(dt.sh,sprintf("%.3f",shapiro.test(dt.list[[pp]])$p.value))
+  }
+  dt.sh.col = numeric(length(dt.sh))
+  dt.sh.col[dt.sh>0.1] = "red"
+  dt.sh.col[dt.sh<=0.1] = "gray"
+  
+  
+  g = ggplot(dt,aes(x=transform, y=data)) +
+    geom_boxplot(fill="cyan", size=.9) +
+    geom_jitter(color="blue",alpha=0.3) +
+    theme_bw(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.2)) +
+    geom_text(data=data.frame(), aes(x=1:length(unique(dt[,1])), y=rep(-4, length(unique(dt[,1]))), label=dt.sh),col=dt.sh.col, size=3) +
+    coord_cartesian(ylim=c(-5,5))
+  print(g)
+  
+  dt.list
+}
+```
+
+Вот пример использования функции. На входе - переменная, имеющая гамма-распределение.
+
+```{r eval=T, message=F, warning=F}
+set.seed(2016)
+y = rgamma(200, 5)
+transformedData = compareTransformations(y)
+```
+
+А вот другой пример.
+
+```{r eval=T, message=F, warning=F}
+y = 1/rnorm(200, 40)*rf(200,40,5)
+transformedData = compareTransformations(y)
+```
+
+
+## T-test 
+
+Дополнительные ресурсы:
+
+* https://r-analytics.blogspot.com/2012/03/t.html
+* https://github.com/Lakens/perfect-t-test
+
+### Непарный t-test - сравниваем объекты из двух групп (так чаще всего и бывает!)
+
+Первым делом генерируем 3 нормально распределенных набора данных (выборки) по 30 элементов каждый
+
+* А1 и А2 - элементы из одной генеральной совокупности (среднее 50, стандартное отклонение 5)
+* B1 - элементы из другой генеральной совокупности (среднее 55, стандартное отклонение 5)
+
+```{r eval=T}
+set.seed(123) # задаем стартовое значения генератору случайных чисел
+A1 = rnorm(30, m=50, 5)
+A2 = rnorm(30, m=50, 5)
+B1 = rnorm(30, m=55, 5)
+
+# можно свести их в таблицу
+tt_df = data.frame(A1 = A1, A2 = A2, B1 = B1)
+head(tt_df)
+```
+
+Это была таблица в "широком" формате (столько столбцов, сколько групп/переменных). Для осуществления дальнейших манипуляций надо ее перевести в "длинный" формат (один столбец с названием групп, другой - со всеми значениями). Для этого можно использовать функцию `melt()` из пакета `reshape2`. Параметр `id.vars` будучи пустым говорит о том, что все колонки надо "сливать в одну".
+
+```{r eval=F}
+library(reshape2)
+tt_df_long = melt(tt_df, id.vars = c())
+```
+```
+   variable    value
+1        A1 47.19762
+2        A1 48.84911
+3        A1 57.79354
+...
+31       A2 52.13232
+32       A2 48.52464
+33       A2 54.47563
+...
+61       B1 56.89820
+62       B1 52.48838
+63       B1 53.33396
+```
+
+Первым делом хотелось бы посмотреть на данные глазами. Посмотрим на 2 типа графика: точечный график и боксплот в разных вариантах.
+
+```{r echo=F, eval=T, message=F, warning=F, fig.width=8, fig.height=4.5}
+library(reshape2)
+library(sinaplot)
+library(scales)
+tt_df_long = melt(tt_df, id.vars = c())
+# PAR settings
+# https://www.r-graph-gallery.com/74-margin-and-oma-cheatsheet/
+# https://stackoverflow.com/questions/30265728/in-r-base-plot-move-axis-label-closer-to-axis
+par(mfrow=c(2,4),mar=c(3,2.5,2,0.2)) 
+plot(1, type="n", axes=F, xlab="", ylab="")
+stripchart(value~variable, tt_df_long, v=T, pch=21, col=alpha("black",0.1), bg=alpha("black",0.2), cex=1.0, main="Stripchart")
+stripchart(value~variable, tt_df_long, v=T, m="jitter", pch=21, col=alpha("black",0.1), bg=alpha("black",0.2), cex=1.0, main="Stripchart+jitter")
+sinaplot(value~variable, tt_df_long, pch=21, col=alpha("black",0.1), bg=alpha("black",0.2), cex=1.0, main="Sinaplot")
+boxplot(value~variable, tt_df_long, main="Boxplot", ylab="value")
+boxplot(value~variable, tt_df_long, ylab="value")
+stripchart(value~variable, tt_df_long, v=T, pch=21, col=alpha("black",0.1), bg=alpha("black",0.2), cex=1.0, add=T)
+boxplot(value~variable, tt_df_long, ylab="value")
+stripchart(value~variable, tt_df_long, v=T, m="jitter", pch=21, col=alpha("black",0.1), bg=alpha("black",0.2), cex=1.0, add=T)
+boxplot(value~variable, tt_df_long, ylab="value")
+sinaplot(value~variable, tt_df_long, pch=21, col=alpha("black",0.1), bg=alpha("black",0.2), cex=1.0, add=T)
+```
+
+Боксплот - наиболее распространенный тип графика, но точки понятнее. Вот как строить эти графики.
+
+```{r eval=F}
+stripchart(value~variable, tt_df_long, v=T, main="Stripchart")
+stripchart(value~variable, tt_df_long, v=T, method="jitter", main="Stripchart+jitter")
+install.packages('sinaplot')
+sinaplot(value~variable, tt_df_long, main="Sinaplot")
+boxplot(value~variable, tt_df_long, main="Boxplot")
+```
+
+Но наиболее понятен был бы график, где есть и точки, и боксплот, и среднее со стандартным отклонением, и доверительный интервал. Для этого надо наслоить эти графики друг на друга.
+
+```{r, echo=T, eval=T, fig.width=4, fig.height=4}
+boxplot(value~variable, tt_df_long, main="Boxplot+sinaplot+mean+sd+ci")
+sinaplot(value~variable, tt_df_long, pch=21, col=alpha("black",0.1), bg=alpha("black",0.2), cex=.8, add=T)
+means = aggregate(value~variable,tt_df_long, "mean")$value
+sds = aggregate(value~variable,tt_df_long, "sd")$value
+ci = aggregate(value~variable,tt_df_long, FUN=function(x) t.test(x)$conf.int)
+ci_lower = ci$value[,1]
+ci_upper = ci$value[,2]
+vars = ci$variable
+points(as.numeric(vars)+0.1, means, col="blue", pch=16)
+arrows(as.numeric(vars)+0.1, means+sds, as.numeric(vars)+0.1, means-sds, code=3, angle=90, col="blue", lwd=1.5, len=0.1)
+arrows(as.numeric(vars)+0.2, ci_lower, as.numeric(vars)+0.2, ci_upper, code=3, angle=90, col="green", lwd=1.5, len=0.07)
+abline(h=50, col="red", lty="dashed", lwd=0.5)
+```
+
+Теперь мы представляем, как выглядит наше тестовое распределение, с которым мы будем работать. Перейдем к t-тесту, чтобы ответить, отличаются ли группы (могли ли они быть взяты из одной генеральной совокупности). Критерий Стьюдента можно применять только проверив нормальность (`shapiro.test()`) и гомогенность дисперсий (`bartlett.test()` или `leveneTest()` из пакета `car`).
+
+```{r eval=T}
+# критерий Стьюдента: нормальное распределение, одинаковые дисперсии
+t.test(A1, B1, var.equal = T)
+# критерий Уэлча: нормальное распределение, может быть разные дисперсии
+t.test(A1, B1)
+# критерий Вилкоксона (Манна-Уитни): любое распределение, любые дисперсии (еще не проходили)
+wilcox.test(A1, B1)
+```
+
+### Парный (=зависимый) - сравниваем измерения на тех же объектах, например, мыши до и после введения лекарства
+* http://www.sthda.com/english/wiki/paired-samples-t-test-in-r
+
+Есть соответствие между точками, сравниваем пары точек.
+
+```{r eval=T}
+library(reshape2)
+
+# генерим пример данных
+mice_w = data.frame(cbind(
+  before = c(332.2, 345.5, 350.9, 352.7, 353.7, 356.9, 360.1, 365.2, 373, 381.4), # Weight of the mice before treatment
+  after = c(345.1, 352.2, 360.3, 377.2, 382.9, 380, 373.9, 386, 402, 385.9), # Weight of the mice after treatment
+  mice_id = 1:10
+))
+mice_w$mice_id = factor(mice_w$mice_id)
+```
+```{r eval=T, echo=F, fig.width=4, fig.height=4}
+mice_l = melt(mice_w, id.vars = "mice_id")
+# Cool ggplot
+library(ggplot2)
+ggplot(mice_l, aes(x=variable, y=value)) + 
+  geom_boxplot(outlier.shape = NA, fill="lightgray") + 
+  geom_point(aes(col=mice_id), size=4.5, shape=22, fill="white") +
+  geom_segment(data=mice_w, aes(x=1.05, xend=1.95, y=before, yend=after,col=mice_id), arrow=arrow(length = unit(0.1, "inches"), type = "closed"), linetype="F1") +
+  geom_text(aes(label=mice_id, col=mice_id), size=3) + 
+  scale_color_brewer(palette="Paired") + 
+  theme_classic() + theme(legend.position="none") + 
+  ggtitle('Парный Т-тест') 
+
+```
+```{r eval=T}
+# Compute t-test (way 1)
+t.test(value~variable, mice_l, paired = TRUE)
+```
+
+А если не учитывать порядок или если использовать непарный т-тест - будет плохо! .
+
+```{r eval=T, echo=F, fig.width=4, fig.height=4}
+# ищем тот порядок, при котором может не быть различий при помощи функции combinat::permn
+mice_w$after = mice_w$after[c(9, 8, 10, 5, 6, 7, 1, 2, 4, 3)]
+mice_l = melt(mice_w, id.vars = "mice_id")
+ggplot(mice_l, aes(x=variable, y=value)) + 
+  geom_boxplot(outlier.shape = NA, fill="lightgray") + 
+  geom_point(aes(col=mice_id), size=4.5, shape=22, fill="white") +
+  geom_segment(data=mice_w, aes(x=1.05, xend=1.95, y=before, yend=after,col=mice_id), arrow=arrow(length = unit(0.1, "inches"), type = "closed"), linetype="F1") +
+  geom_text(aes(label=mice_id, col=mice_id), size=3) + 
+  scale_color_brewer(palette="Paired") + 
+  theme_classic() + theme(legend.position="none") + 
+  ggtitle('Парный Т-тест: порядок важен!')
+```
+```{r eval=T}
+t.test(mice_w$before, mice_w$after, paired=TRUE)$p.value
+t.test(value~variable, mice_l)$p.value
+```
+
+У парного t-test есть модификации
+
+* **two.sided** (нет оснований заранее предполагать, что before больше или меньше after) 
+* **less** (ожидаем, что что before больше after)
+* **greater** (ожидаем, что что before больше after)
+
+По умолчанию подразумевается two.sided, но мы это можем изменить, задав параметр `alternative`.
+
+```{r}
+t.test(before, after, paired = TRUE, alternative="two.sided")
+```
+
+### Мастер-функция для проверки нормальности распределения
+
+http://www.sthda.com/english/wiki/normality-test-in-r
+
+На входе - формула и таблица. Проверяется нормальность во всех группах 4-мя критериями
+
+```{r eval=F}
+# графики
+il = melt(iris, id.vars = ("Species"))
+library(ggpubr)
+ggqqplot(il, "value", facet.by = c('Species', 'variable'))
+
+# цифры разные критерии
+library(PoweR)
+?statcompute
+normalityrejections<-(statcompute(21, diff, levels = c(0.05))$decision + statcompute(6, diff, levels = c(0.05))$decision + statcompute(2, diff, levels = c(0.05))$decision + statcompute(7, diff, levels = c(0.05))$decision)
+tests = list()
+tests[[21]] = "Shapiro-Wilk"
+tests[[6]] = "D'Agostino-Pearson"
+tests[[2]] = "Anderson-Darling"
+tests[[7]] = "Jarque-Bera"
+```
+
+### Мастер-функция для проверки гомогенности дисперсии (***)
+
+leveneTest, bartlett.test
+
+### Функция проведения разных допустимых t-тестов
+### Достоверность эффекта и сила эффекта
+
+https://www.statisticshowto.datasciencecentral.com/hedges-g/
+
+**Т-тест и Hedges'g**
+
+```{r}
+d <- cohen.d (y ~ factor (x), hedges.correction = TRUE)
+```
+
+A g of 1 indicates the two groups differ by 1 standard deviation, a g of 2 indicates they differ by 2 standard deviations, and so on. Standard deviations are equivalent to z-scores (1 standard deviation = 1 z-score).
+
+Rule of Thumb Interpretation
+Cohen’s d and Hedges’ g are interpreted in a similar way. Cohen suggested using the following rule of thumb for interpreting results:
+
+Small effect (cannot be discerned by the naked eye) = 0.2
+Medium Effect = 0.5
+Large Effect (can be seen by the naked eye) = 0.8
+Cohen did suggest caution when using this rule of thumb. The terms “small” and “large” effects can mean different things in different areas. For example, a “small” reduction in suicide rates is invaluable, where a “small” weight loss may be meaningless. 
+
+### Доверительные интервалы и бутстреп
+
+|Error bar type|Overlapping error bars|Non-overlapping error bars|
+|--- |--- |--- |
+|SD|no inference|no inference|
+|SEM|sample means are not significantly different|no inference|
+|CI|sample means may or may not be significantly different|sample means are significantly different|
+
+
+```{r}
+set.seed(012345)
+x = rgamma(50, 3, 2)
+hist(x)
+plot(density(x))
+shapiro.test(x)
+
+abline(v=mean(x), col="red")
+abline(v=median(x), col="blue")
+abline(v=t.test(x)$conf.int, col="red", lty="dotted")
+
+library(boot)
+x.b = boot(data.frame(ind=rep(1, length(x)), val=x), function(d, i) median(d[i,"val"]), R=1000)
+abline(v=boot.ci(x.b, type = 'basic')$basic[4:5], col="blue", lty="dotted")
+```
+
+## Дисперсионный анализ (ANOVA = ANalysis Of VAriance)
+
+* https://r-analytics.blogspot.com/2013/01/blog-post.html
+* http://personality-project.org/r/r.guide/r.anova.html#oneway
+* http://www.sthda.com/english/wiki/one-way-anova-test-in-r
+
+Сравнение средних в **нескольких** группах. 
+
+> **Вопрос**: Есть ли различия между группами? Какова вероятность, что такие значения можно случайно выбрать из одной генеральной совокупности?
+
+Если межгрупповая изменчивость превышает внутригрупповую, то различия есть.
+
+Варианты дисперсионного анализа:
+
+* Однофакторный и многофакторный (число группирующих признаков)
+* Параметрический и непараметрический (kruskal.test или приведение к нормальному распределению)
+
+
+**Пример**.
+
+Длины чашелистиков трех видов рода _Iris_.
+
+Сначала посмотрим глазами на различия... _Не очень ясно, то ли отличаются, то ли нет_...
+
+```{r}
+library(scales)
+boxplot(Sepal.Length ~ Species, iris) # формульный формат данных: зависимая переменная ~ независимая (группирующая, например, вид)
+stripchart(Sepal.Length ~ Species, iris, 
+    vertical = TRUE, method = "jitter", add = TRUE, pch = 1, col = alpha('blue', 0.3))
+```
+
+Теперь проанализируем с помощью однофакторного дисперсионного анализа (фактор - вид).
+    
+```{r}
+iris_aov = aov(Sepal.Length ~ Species, iris)
+summary(iris_aov)
+```
+
+Видим, что F-значение >> 1, т.е. межгрупповая изменчивость больше внутригрупповой, т.е. различия между группами есть.
+
+P-value << 0.05 - значит отклоняем нулевую гипотезу об отсутствии различий между группами. Т.е. достоверные различия между какими-то группами есть. Больше ничего не можем сказать.
+
+Чтобы сказать, какие же группы от каких отличаются, нужны множественные попарные сравнения типа t-test. Но с поправкой на множественность сравнений (Bonferroni, Tukey...).
+
+* https://r-analytics.blogspot.com/2013/10/blog-post.html
+* https://r-analytics.blogspot.com/2013/10/blog-post_13.html
+* https://r-analytics.blogspot.com/2013/10/blog-post_19.html
+* https://www.slideshare.net/SergeyMastitsky/9-anova
+
+```{r}
+with(iris, pairwise.t.test(Sepal.Length,Species, p.adj="bonferroni"))
+
+par(mar = c(4.5, 8, 4.5, 4.5))
+plot(TukeyHSD(iris_aov), las=1)
+```
+
+```{r}
+```
+
+```{r}
+```
+## Advanced graphics: ggplot2 etc
+
+https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
+
+* ggplot - основное окно, данные (эстетики и не-эстетики)
+* элементы графика
+    - точки geom_points
+    - линии geom_line
+    - полигоны geom_ribbon/geom_polygon
+    - текст geom_text
+    - geom_pointrange, geom_bar, geom_abline, geom_density, geom_histogram, geom_jitter, geom_sina, geom_rug, geom_violin, geom_segment
+    - боксплоты 
+* элементы наслоения
+* сдвиг
+* полупрозрачность
+* "пощупать" график с plotly
+* facetting, multiple plots of different sizes
+* par
+
+## Boxplot и его типы
+
+Читать: https://flowingdata.com/2012/05/15/how-to-visualize-and-compare-distributions/
+
+* боксплот
+* синаплот
+* разбросы
+    - доверительный интервал норм, т-распр, бутстреп
+* значимость
+* точки
+* щупаем
+
+Демонстрация
+
+```{r}
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+head(ToothGrowth)
+library(ggplot2)
+# просто точки
+ggplot(ToothGrowth, aes(x=dose, y=len)) + 
+  geom_point() + theme_bw()
+
+ggplot(ToothGrowth, aes(x=dose, y=len)) + 
+  geom_jitter(position=position_jitter(0.2)) + theme_bw()
+
+# обычные boxplots
+ggplot(ToothGrowth, aes(x=dose, y=len)) + 
+  geom_boxplot() + theme_bw()
+
+# violin plots
+ggplot(ToothGrowth, aes(x=dose, y=len)) + 
+  geom_violin(trim = FALSE) + theme_bw()
+
+# mean +/- sd
+ggplotly(ggplot(ToothGrowth, aes(x=dose, y=len)) +
+  geom_jitter(position=position_jitter(0.2)) +
+  stat_summary(fun.data="mean_sdl", geom="pointrange", color="red") +
+  theme_bw())
+
+# boxplot + jitter + ...
+# mean_sdl
+tinterval = function(x) data.frame(ymin=t.test(x)$conf.int[1], ymax=t.test(x)$conf.int[2])
+ggplot(ToothGrowth, aes(x=dose, y=len)) +
+  geom_boxplot() +
+  geom_jitter(position=position_jitter(0.2), col=alpha("black",0.3), size=3) +
+  stat_summary(fun.data="mean_sdl", geom="pointrange", color="red", size=1.5) +
+  stat_summary(fun.data="tinterval", geom="linerange", color="green", size=3) +
+  theme_bw()
+
+g = ggplot(ToothGrowth, aes(x=dose, y=len)) +
+  geom_boxplot() +
+  geom_jitter(position=position_jitter(0.2), col=alpha("black",0.3), size=3) +
+  stat_summary(fun.data="mean_sdl", geom="pointrange", color="red", size=4) +
+  stat_summary(fun.data="tinterval", geom="linerange", color="green", size=2) +
+  theme_bw()
+
+ggplotly(g)
+
+```
+
+
+## Дополнительные конструкции программирования, автоматизация (***)
+### Проверка условий
+
+* if else, ifelse, logical indexing, %in%
+* subset
+
+
+### Циклы
+
+* for
+* while
+* foreach
+* until
+
+
+### Параллельное вычисление
+
+* aggregate, apply, by
+* lambda-функции
+* векторизованные вычисления
+
+```{r}
+# Вариант №1:
+Var = function(x) ((sum((x-mean(x))^2))/(length(x)-1))
+  
+# Вариант №2:
+cicledVar = function(x){ 
+  Xavr=mean(x) 
+  a <- 0 
+  for (i in 1:length(x)) 
+    a <- a+(x[i]-Xavr)^2 
+  cicledVar <- a/(length(x)-1) 
+  return(cicledVar) 
+}
+
+dat = rnorm(100000, 50, 3)
+system.time(for (i in 1:1000) Var(dat))
+system.time(for (i in 1:1000) cicledVar(dat))
+```
+
+### Примеры автоматизации
+#### Автоматизация расчетов на примере `shapiro.test()`
+
+Надо проверить нормальность распределения каждой из переменных (их 4) для каждого вида ирисов (их 3).
+
+Если не автоматизировать, то надо написать $4\cdot3=12$ команд следующего вида (заменяя название вида и переменной)
+
+```{r eval=T}
+shapiro.test(iris[iris$Species == 'versicolor', 'Petal.Length'])$p.value
+```
+
+Основа автоматизации - циклы. Цикл `for` -  это когда для каждого элемента из набора производится какое-то действие. 
+
+_Циклы необходимы тогда, когда нужны последовательные вычисления. Альтернативой являются функции для параллельного вычисления (apply/sapply/tapply/vapply/lapply). В последнем случае циклов желательно избегать._
+
+Еще почитать про циклы
+
+* https://www.r-bloggers.com/how-to-write-the-first-for-loop-in-r/
+* https://habr.com/company/microsoft/blog/320232/
+
+```{r eval=F}
+# набор
+numbers = 1:10
+# действие - печать элемента
+for (i in numbers){
+  print(i)
+}
+# другое возможное действие - возведение в степень
+for (i in numbers){
+  print(i^2)
+}
+```
+
+Теперь применим знание о циклах для нашей задачи. Распечатаем `shapiro.test(...)$p.value` для всех переменных одного вида.
+
+```{r eval=T}
+# переменные
+colnames(iris)
+# переменная Species нам не нужна
+colnames(iris)[1:4] # аналогичного эффекта можно добиться так: colnames(iris)[-5]
+my_vars = colnames(iris)[1:4]
+
+for (var_i in my_vars){
+  print(var_i)
+  print(shapiro.test(iris[iris$Species == 'versicolor', var_i])$p.value)
+}
+```
+
+Чтобы два раза не печатать `print()`, а скомбинировать два значения (имя переменной и значение p-value), можно использовать функцию `paste()`. А еще можно использовать функцию `round()` для округления значений.
+
+```{r eval=T}
+my_var_name = "MyVariableName"
+my_pvalue = 0.05235125413524
+print(paste(my_var_name, round(my_pvalue, 3)))
+```
+
+Аналогично распечатаем `shapiro.test(...)$p.value` для одной переменной всех видов.
+
+```{r eval=F}
+# виды
+iris$Species # перечень всех значений переменной
+unique_species = unique(iris$Species) # найдите как достать уникальные значения вектора/фактора
+
+for (sp_i in unique_species){
+  rounded = round( shapiro.test(iris[iris$Species == sp_i, 'Petal.Length'])$p.value, 3 )
+  print(paste(sp_i, rounded))
+}
+```
+```{r eval=T}
+for (sp_i in unique(iris$Species)) print(paste(sp_i, round( shapiro.test(iris[iris$Species == sp_i, 'Petal.Length'])$p.value, 3 )))
+```
+
+Теперь мы готовы оценить нормальность всех признаков для всех видов. Но сначала создадим матрицу размерностью в _ЧислоВидов\*ЧислоПеременных_, куда будем помещать значения.
+
+```{r eval=T}
+# считаем число видов
+Nsp = length(unique(iris$Species))
+# считаем число признаков
+Nvar = ncol(iris)-1
+# создаем пустую матрицу размерностью ЧислоВидов*ЧислоПеременных
+my_matrix = matrix(data=NA, nrow=Nsp, ncol = Nvar) # строки-виды, колонки-признаки
+# подписываем названия колонок и строк
+colnames(my_matrix) = colnames(iris)[1:4] 
+rownames(my_matrix) = unique(iris$Species)
+```
+
+Теперь в приготовленную матрицу закидываем значения, которые в цикле получим.
+
+```{r eval=T}
+for (sp_i in rownames(my_matrix)){
+  for(var_i in colnames(my_matrix)){
+    my_matrix[sp_i, var_i] = shapiro.test(iris[iris$Species == sp_i, var_i])$p.value
+  }
+}
+# округляем
+round(my_matrix, 3)
+# выясняем, кто распределен нормально
+my_matrix > 0.05
+```
+
+Итак, вместо множества однообразных команд мы смогли написать программу, которая автоматически может проверить нормальность распределения любого количества признаков у любого количества видов. А потом эти данные можно наглядно визуализовать в виде `heatplot`.
+
+```{r eval=T, echo=F, fig.width=3.5, fig.height=2.6}
+library(ggplot2)
+library(reshape2)
+my_matrix_melted = melt(my_matrix)
+# http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+ggplot(data = my_matrix_melted, aes(x=Var2, y=Var1, fill=value)) + 
+geom_tile(color = "white")+
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+   midpoint = 0.1, limit = c(0,1), space = "Lab", 
+    name="p-value", breaks = c(0, 0.05, 0.1, 0.5,1), trans="sqrt") +
+  theme_minimal()+ # minimal theme
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))+
+ coord_fixed() + xlab("") + ylab("") +
+geom_text(aes(Var2, Var1, label = sprintf("%.3f", value)), color = "black", size = 3) + 
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank())
+```
+
+
+## Работа с файлами
+### Ввод в текстовом виде
+
+```{r}
+weight_of_my_students = c(65, 54, NA, 67, 45, 78) # NA - Not Available
+```
+
+### Copy-paste из экселя 
+
+```{r}
+my_table = read.table(text="сюда	вставлять	таблицу") # далее пример
+my_table = read.table(text="v1	v2
+1	2
+11	22
+111	222
+1.3	7
+4	NA", header=TRUE, dec=".") # header=TRUE если есть названия переменных, dec="." устанавливает точку десятичным разделителем
+# анализируем структуру открытой таблицы
+str(my_table)
+```
+
+### Импорт из Excel (XLSX и т.п.)
+
+* Найти файл и сохранить найденное название в переменную - file.choose()
+* Узнать/сменить рабочую директорию - getwd() и setwd()
+* Записать в переменную имя+путь файла (опциально)
+* Установить новый пакет - install.packages('openxlsx')
+* Загрузить пакет - library(openxlsx)
+* Можно импортировать экспортированные таблицы из форматов TXT, CSV, DAT (`read.table()`, `read.csv()`...)
+* Собственно открыть файл
+* Полезные опции импорта (могут немного отличаться для разных команд)
+    - `sheet` (название листа XLSX, который будет импортирован)
+    - `header=TRUE` (если есть названия переменных в первой строке)
+    - `na.strings = с("", "NA", "Na", "na", "?")` (сразу говорим, как выглядят пропущенные данные)
+    - `dec=","` (задаем десятичный разделитель - как правило `","` для русской локализации операционных систем)
+* Применить функцию `toupper()` ко всем строковым переменным, чтобы ликвидировать разницу в регистрах
+* Сразу после импорта полезно задать классы переменных функцией `colClasses()` (если это не было сделано при чтении файла)
+* Затем просмотреть таблицу на предмет ошибок 
+* Для ранжированных факторов (например, возраст: "молодой", "зрелый", "старый") нужно задать порядок уровней командой `factor()`, например `factor(age, ordered=T, levels=c('young', 'middle-aged', 'old'))`
+ 
+```{r eval=F}
+install.packages('openxlsx') # если этот пакет еще не установлен
+library(openxlsx)
+
+getwd() # а setwd чтобы перейти в другую папку
+my_filename1 = file.choose() # выбираем в окошке
+my_filename2 = "/Users/lapotok/Dropbox/study/biochem_statistics/bad_data_example.xlsx"# '/Users/some_directory/my_file.xlsx'
+
+my_xlsx = read.xlsx(my_filename2)
+str(my_xlsx)
+```
+
+
+
+### Парсинг - 1
+
+Парсинг - считывание и распознавание файла в каком-то хитром формате с целью выудить определенные данные оттуда и перевести в удобный нам формат.
+
+<style>
+pre#ifa {counter-reset: line;}
+pre#ifa span{counter-increment: line;}
+pre#ifa span:before{content: counter(line); margin-right: .8em; margin-left: .2em; color: #ddd;}
+pre#ifa span:before{-webkit-user-select: none;}
+</style>
+
+<pre id="ifa">
+<span>Labsystems GENESIS Plate Data REV3.05</span>
+<span>C:\genlite\protocol\450\05MAY12W.001</span>
+<span>MULTISKAN EX    PRIMARY EIA V. 2.1-0        </span>
+<span>05 May 2012   18:03:27</span>
+<span>c:\genlite\protocol\450.prt</span>
+<span>0 12</span>
+<span>1</span>
+<span></span>
+<span></span>
+<span></span>
+<span>450</span>
+<span>00:00:00</span>
+<span>0</span>
+<span>[DATA 0001]</span>
+<span> 2.692 2.889 1.086 1.088 1.380 1.301 1.411 1.357 1.306 1.324 1.025 0.962</span>
+<span> 3.030 3.117 1.048 1.007 1.319 1.154 1.304 1.086 1.168 1.158 0.714 0.723</span>
+<span> 2.839 2.882 0.798 0.845 0.982 0.964 1.003 1.059 0.984 1.052 0.297 0.268</span>
+<span> 1.805 1.986 0.361 0.371 0.543 0.530 0.615 0.616 0.493 0.571 0.114 0.122</span>
+<span> 0.561 0.573 0.117 0.124 0.182 0.164 0.207 0.196 0.152 0.185 0.065 0.068</span>
+<span> 0.188 0.156 0.077 0.077 0.086 0.083 0.092 0.094 0.078 0.085 0.066 0.055</span>
+<span> 0.088 0.093 0.065 0.052 0.056 0.055 0.055 0.060 0.056 0.055 0.050 0.053</span>
+<span> 0.053 0.055 0.055 0.064 0.059 0.060 0.050 0.053 0.051 0.052 0.052 0.050</span>
+</pre>
+
+* Полезные функции: read.table, scan, file+readLines+close, strsplit, paste, substr
+* Regular expressions (grep, gsub)
+
+### Парсинг - 2
+
+Вариант 1 - читаем построчно, распознаем
+
+```{r eval=F}
+file_name = "/Users/lapotok/Dropbox/study/biochem_statistics/05MAY12W.001.fia.txt"
+file_con = file(file_name)
+file_contents = readLines(file_con)
+close(file_con)
+
+print(file_contents)
+
+for(i in 15:22) {
+  print(strsplit(file_contents[i], ' ')) # объект формата список
+}
+
+for(i in 15:22) print(strsplit(file_contents[i], ' ')[[1]])
+
+my_values = c()
+for(i in 15:22) my_values = c(my_values, as.numeric(strsplit(file_contents[i], ' ')[[1]][2:13]))
+my_values
+my_matrix = matrix(my_values, nrow=8, ncol=12, byrow = TRUE)
+my_matrix
+```
+
+### Парсинг - 3
+
+```{r eval=F}
+# а можно и быстрее!
+scan(file_name, skip=14)
+matrix(scan(file_name, skip=14), nrow=8, byrow=T)
+
+# а теперь все файлы *.fia.txt в директории!
+my_fias = list()
+my_dir = "/Users/lapotok/Dropbox/study/biochem_statistics/"
+dir(my_dir)
+dir(my_dir, pattern="*.fia.txt") # *.fia.txt - пример регулярного выражения
+
+# цикл - основа автоматизации
+my_file_example = "05MAY12W.001.fia.txt"
+my_dir
+paste(my_dir, my_file_example)
+paste(my_dir, my_file_example, sep="")
+
+for (my_file in dir(my_dir, pattern="*.fia.txt")) print(matrix(scan(my_file, skip=14), nrow=8, byrow=T))
+
+for (my_file in dir(my_dir, pattern="*.fia.txt")) my_list[[my_file]] = matrix(scan(my_file, skip=14), nrow=8, byrow=T)
+my_list
+```
+
+### Импорт таблицы с сайта (HTML) - 1
+
+Код:
+
+<pre style="font-size: 60%">
+&lt;html&gt;
+  &lt;head&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;table id="results" class="someclass"&gt;
+      &lt;tr&gt;
+        &lt;th&gt;<b>Заголовок 1</b>&lt;/th&gt;&lt;th&gt;<b>Заголовок 2</b>&lt;/th&gt;
+      &lt;/tr&gt;  
+      &lt;tr&gt;
+        &lt;td&gt;Ячейка 1.1&lt;/td&gt;&lt;td&gt;Ячейка 1.2&lt;/td&gt;
+      &lt;/tr&gt;  
+      &lt;tr&gt;
+        &lt;td&gt;Ячейка 2.1&lt;/td&gt;&lt;td&gt;Ячейка 2.2&lt;/td&gt;
+      &lt;/tr&gt;  
+    &lt;/table&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+Результат:
+
+<table id="results" class="someclass" style="margin-left:auto;margin-right:auto;">
+  <tr>
+    <th>Заголовок 1</th><th>Заголовок 2</th>
+  </tr>  
+  <tr>
+    <td>Ячейка 1.1</td><td>Ячейка 1.2</td>
+  </tr>  
+  <tr>
+    <td>Ячейка 2.1</td><td>Ячейка 2.2</td>
+  </tr>  
+</table>
+
+### Импорт таблицы с сайта (HTML) - 2
+
+```{r eval=F}
+library(httr)
+library(rvest)
+
+# локальный файл
+file_name = "/Users/lapotok/Dropbox/study/biochem_statistics/parkrun.html.txt"
+my_html = read_html(file_name)
+
+# простая закачка страницы с сайта
+url = 'http://www.parkrun.ru/severnoetushino/results/weeklyresults/?runSeqNumber=248'
+my_html = read_html(url) # Ошибка! Ограничение на скачивание
+
+# хитрые случаи
+url = 'http://www.parkrun.ru/severnoetushino/results/weeklyresults/?runSeqNumber=248'
+
+# use_proxy - если надо в обход блокировки, в примере - прокси для TorBrowser
+# add_headers - если надо "притвориться браузером", как в данном случае
+w <- GET(url,
+          use_proxy("socks5://localhost:9150"),
+          add_headers('user-agent' = 'Gov employment data scraper ([[your email]])'))
+my_html = read_html(w)
+res = html_node(my_html, 'table#results')
+tbl = html_table(res)
+```
+```{r echo=F, fig.width=5, fig.height=3, fig.align='center'}
+library(httr)
+library(rvest)
+library(ggplot2)
+file_name = "/Users/lapotok/Dropbox/study/biochem_statistics/parkrun.html.txt"
+my_html = read_html(file_name)
+res = html_node(my_html, 'table#results')
+tbl = html_table(res)
+
+tl = sapply(tbl[,3],function(x)strsplit(x, ':'))
+tbl$Time = unclass(sapply(tl, function(x) as.numeric(x[1])+as.numeric(x[2])/60))
+tbl[,4] = sapply(tbl[,4], function(x) strsplit(substr(x, 3, nchar(x)), '-')[[1]][1])
+tbl = na.omit(tbl[,c(2, 4, 6, 10, 12)])
+
+tbl[,2] = as.numeric(tbl[,2])
+tbl[,3] = as.factor(tbl[,3])
+tbl[,4] = as.numeric(tbl[,4])
+colnames(tbl) = c('Name', 'Age', 'Gender', 'Runs', 'Time')
+ggplot(tbl, aes(x=Gender, y=Time, col=Gender)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(position = position_jitter(0.1), alpha=0.5, size=3) +
+  geom_hline(yintercept = 22.71667, col='red', linetype='dashed') +
+  theme_bw()
+```
+
+
+### Импорт GPS треков GPX (XML)
+
+<pre style="font-size: 40%;">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;gpx
+  version="1.1"
+  creator="Runkeeper - http://www.runkeeper.com"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.topografix.com/GPX/1/1"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"
+  xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"&gt;
+&lt;wpt lat="37.778259000" lon="-122.391386000"&gt;
+  &lt;ele&gt;3.4&lt;/ele&gt;
+  &lt;time&gt;2016-06-17T23:41:03Z&lt;/time&gt;
+  &lt;extensions&gt;
+    &lt;gpxtpx:TrackPointExtension&gt;
+      &lt;gpxtpx:hr&gt;171&lt;/gpxtpx:hr&gt;
+    &lt;/gpxtpx:TrackPointExtension&gt;
+  &lt;/extensions&gt;
+&lt;/wpt&gt;
+&lt;wpt lat="37.778194000" lon="-122.391226000"&gt;
+  &lt;ele&gt;3.4&lt;/ele&gt;
+  &lt;time&gt;2016-06-17T23:41:13Z&lt;/time&gt;
+  &lt;extensions&gt;
+    &lt;gpxtpx:TrackPointExtension&gt;
+      &lt;gpxtpx:hr&gt;171&lt;/gpxtpx:hr&gt;
+    &lt;/gpxtpx:TrackPointExtension&gt;
+  &lt;/extensions&gt;
+&lt;/wpt&gt;
+...
+&lt;/gpx&gt;
+</pre>
+
+```{r eval = F}
+# вариант со скачиванием из интернета
+fl = read_html('https://gist.githubusercontent.com/cly/.../sample.gpx')
+
+# вариант с локальным файлом
+fl = read_html("/Users/lapotok/Dropbox/study/biochem_statistics/gpx.txt")
+html_attr(html_nodes(fl,'wpt'), 'lat')
+html_text(html_nodes(fl,'ele'))
+html_text(html_nodes(fl,'time'))
+```
+
+* Импорт из других форматов (HTML, XML, кастомные форматы выдачи приборов и т.п.) - можно найти пакеты/советы на форумах/написать самому
+
+### Задания
+
+* Пропарсить XML (RSS с сайта кафедры - http://biochem.bio.msu.ru/sitemap.xml)
+
+```{r eval=F}
+xml_url = 'http://biochem.bio.msu.ru/sitemap.xml'
+
+fl = read_html(xml_url)
+html_nodes(fl,'loc')
+html_nodes(fl,'lastmod')
+html_text(html_nodes(fl,'lastmod'))
+
+df = data.frame(
+  loc = html_text(html_nodes(fl,'loc')),
+  lastmod = html_text(html_nodes(fl,'lastmod'))
+)
+```
+
+## Регрессия: 5 PL curve
+
+### DRC 
+
+```{r eval=F, fig.width=4.5, fig.height=4}
+copypasted = "conc	1	2	3
+300.00	1250233	1192534	1159014
+100.00	639743	627215	639018
+33.33	186238	182822	189122
+11.11	44873	42599	45131
+3.70	10219	9413	10251
+1.23	3594	3723	3493
+0.41	2106	NA	2137
+0.00	1575	1880	1633
+0.00	1836	1724	1298"
+
+rd <- read.table(header=TRUE, row.names=NULL, sep="\t", text=copypasted)
+
+suppressMessages(require(drc))
+suppressMessages(require(reshape2))
+suppressMessages(require(ggplot2))
+suppressMessages(require(latex2exp))
+
+colnames(rd) = c("conc", 1:(ncol(rd)-1))
+ld = melt(rd, id.vars=c("conc"))
+m = drm(value ~ conc, data = subset(ld, select = c("conc", "value")), fct=LL.5())
+m = suppressWarnings(suppressMessages(boxcox(m, plotit = F)))
+
+coeffs = as.data.frame(coefficients(m))
+rownames(coeffs) = c("B", "C", "D", "E", "F")
+print(coeffs)
+
+# prediction
+pred_xlim = c(
+  ifelse(min(ld$conc) == 0, min(ld$conc[ld$conc > 0])/10, min(ld$conc)),
+  max(ld$conc)
+)
+pred = expand.grid(conc=exp(seq(log(pred_xlim[1]), log(pred_xlim[2]), length=100)))
+pm = suppressWarnings(predict(m, newdata=pred, interval="confidence"))
+pred$p <- pm[,1]
+pred$pmin <- pm[,2]
+pred$pmax <- pm[,3]
+# adjust 0
+ld$conc0 <- ld$conc
+ld$conc0[ld$conc0 == 0] <- pred_xlim[1]
+
+ggplot(ld, aes(x = conc0, y = value)) +
+  geom_point(size=3, alpha=.4, na.rm = T) +
+  suppressWarnings(geom_ribbon(data=pred, aes(x=conc, y=p, ymin=pmin, ymax=pmax), alpha=0.2)) +
+  geom_line(data=pred, aes(x=conc, y=p)) +
+  scale_x_log10() +
+  scale_y_log10() + 
+  annotation_logticks(sides="lb") +
+  coord_cartesian(xlim = c(pred_xlim[1]*0.9,pred_xlim[2]*1.2), ylim=c(min(pred$pmin)*0.5, max(pred$pmax))*1.5, expand = F) +
+  xlab("Концентрация") + ylab("Сигнал") +
+  ggtitle(TeX('$f(x,(b,c,d,e,f))=c+\\frac{d-c}{(1+exp(b\\cdot(\\log(x)-\\log(e))))^f$')) +
+  theme_classic()
+```
+
+### MEDRC
+
+```{r eval=F}
+copypasted = "conc	1	2	3
+300.00	1250233	1192534	1159014
+100.00	639743	627215	639018
+33.33	186238	182822	189122
+11.11	44873	42599	45131
+3.70	10219	9413	10251
+1.23	3594	3723	3493
+0.41	2106	NA	2137
+0.00	1575	1880	1633
+0.00	1836	1724	1298"
+
+rd <- read.table(header=TRUE, row.names=NULL, sep="\t", text=copypasted)
+
+# install.packages("devtools")
+# library(devtools)
+# install_github("DoseResponse/medrc")
+# install_github("DoseResponse/drcData")
+library(medrc)
+
+suppressMessages(require(drc))
+suppressMessages(require(reshape2))
+suppressMessages(require(ggplot2))
+suppressMessages(require(latex2exp))
+
+colnames(rd) = c("conc", 1:(ncol(rd)-1))
+ld = melt(rd, id.vars=c("conc"))
+m = drm(value ~ conc, data = subset(ld, select = c("conc", "value")), fct=LL.5())
+m = suppressWarnings(suppressMessages(boxcox(m, plotit = F)))
+
+coeffs = as.data.frame(coefficients(m))
+rownames(coeffs) = c("B", "C", "D", "E", "F")
+print(coeffs)
+
+# prediction
+pred_xlim = c(
+  ifelse(min(ld$conc) == 0, min(ld$conc[ld$conc > 0])/10, min(ld$conc)),
+  max(ld$conc)
+)
+pred = expand.grid(conc=exp(seq(log(pred_xlim[1]), log(pred_xlim[2]), length=100)))
+pm = suppressWarnings(predict(m, newdata=pred, interval="confidence"))
+pred$p <- pm[,1]
+pred$pmin <- pm[,2]
+pred$pmax <- pm[,3]
+# adjust 0
+ld$conc0 <- ld$conc
+ld$conc0[ld$conc0 == 0] <- pred_xlim[1]
+
+ggplot(ld, aes(x = conc0, y = value)) +
+  geom_point(size=3, alpha=.4, na.rm = T) +
+  suppressWarnings(geom_ribbon(data=pred, aes(x=conc, y=p, ymin=pmin, ymax=pmax), alpha=0.2)) +
+  geom_line(data=pred, aes(x=conc, y=p)) +
+  scale_x_log10() +
+  scale_y_log10() + 
+  annotation_logticks(sides="lb") +
+  coord_cartesian(xlim = c(pred_xlim[1]*0.9,pred_xlim[2]*1.2), ylim=c(min(pred$pmin)*0.5, max(pred$pmax))*1.5, expand = F) +
+  xlab("Концентрация") + ylab("Сигнал") +
+  ggtitle(TeX('$f(x,(b,c,d,e,f))=c+\\frac{d-c}{(1+exp(b\\cdot(\\log(x)-\\log(e))))^f$')) +
+  theme_classic()
+```
+
+
+## DoE
+
+* Построение матриц сочетаний условий (+графики)
+* добавление дополнительных точек
+* 
+
+## _Еще_
+
+* здесь должен быть список
+
+## Задания
+
+* Центральная предельная теорема - симуляция
+
+
+
+# Версия XXI века (tidyverse и т.п.)
+## Идеи
+
+- [импорт](https://github.com/rstudio/cheatsheets/blob/master/data-import.pdf) с помощью `readxl` и т.п.
+- оператор `%>%`
+- преобразование если надо в tibble/data.table
+- [ ] [реформатирование](https://github.com/rstudio/cheatsheets/blob/master/data-transformation.pdf) данных с помощью mutate/transform/group_by
+- [ ] ggplot
+
+* Актуальные примеры данных
+  - [ ] Для дескриптивных статистик
+  - [ ] Для импорта
+  - [ ] Для регрессии
+
+-          Draw a protein standard curve using base R and ggplot2
+-          Extracting data from objects
+-          Drawing an enzyme kinetics plot
+-          Customizing and reusing plots with R
+-          Getting your data into R for exploration
+- Simple summary statistics and charts
+- Assessment of imprecision, method comparison, and derivation of reference intervals using R
+- Generating reports with RMarkdown
+- ggplot2
+- RShiny
+
+## Логика повествования
+
+* Арифметика, переменные, типы данных, функции
+* pipelines
+* чтение файла и простейшая обработка
+* Table, cutsum, hist, dens, qq, line, points, mean, median, var, sd
+* Norm test, barttest,  t.test, Wilcox
+* ANOVA, Turkey
+* Regression
+
+* _Дорассказать по ходу дела_
+    * Vars and operations, maths (примеры)
+    * Data types, indexing, logical operations
+    * Aggregate, apply, map
+    * Melt/gather
+
+## Введение
+### Расчеты, операции с данными (арифметика)
+
+```{r}
+1 + 1
+2 * 3
+(4 + 5) * 6
+2 ^ 3
+2 ^ 0.5
+sqrt(2)
+log10(100)
+log2(16)
+log(9, base = 3)
+abs(-4)
+```
+
+### Переменные
+
+* Переменные: имена, присвоения, использование
+* присвоение значений переменным
+
+```{r}
+my_variable = 1
+MyVariable = 1
+my.variable = 1
+```
+
+```{r}
+a = 1
+a=1
+a <- 1
+a = "kjfhs"
+a = 'kjfhs'
+```
+
+### Типы данных
+
+Простые типы данных (числовые и строковые константы, векторы, факторы)
+
+```{r}
+# number
+my_number = 1
+
+# character
+my_char = "bla\tbla\nbla"
+cat(my_char)
+
+# boolean
+my_bool1 = TRUE
+my_bool2 = FALSE
+
+if(my_bool1) {
+  print("TRUE")
+} else {
+  print("FALSE")
+}
+
+ifelse(my_bool1, "TRUE", "FALSE")
+
+2<1
+ifelse(2<1, "TRUE", "FALSE")
+my_bool3 = 2<1 
+ifelse(my_bool3, "TRUE", "FALSE")
+
+# vector набор данных одного типа (одни единицы измерения)
+my_vector1 = 1:20
+my_vector1.1 = rep(9, 30) # последовательность из 9 длиной 30
+length(my_vector1.1)
+# подмножество из вектора
+my_vector1[2:4]
+my_vector2 = c(169, 180, 157, 165, 190, NA, 185, 164, 171) # NA = Not Available = пропущенные данные
+# выполняем операцию сравнения
+my_vector2 > 170
+# выбираем значения, отвечающие критерию my_vector2 > 40
+my_vector2[my_vector2 > 170]
+186 %in% my_vector2
+190 %in% my_vector2
+my_vector2 == 190
+
+# factor vs vector
+# создаем вектор
+age = c("young", "middle-aged", "old", "Old", "young", "middle-aged", "middle-aged")
+age # просто перечень текстовых значений
+# преобразуем в фактор (текстовые значения в коды, текст отображается лишь для простоты восприятия)
+factor(age) # видим лишний уровень "Old", дублирующий "old"
+age = c("young", "middle-aged", "old", "old", "young", "middle-aged", "middle-aged")
+factor(age) # несортированный фактор
+factor(age, levels=c("young", "middle-aged", "old"), ordered = TRUE) # levels задает возрастающий порядок уровней
+```
+
+Сложные типы данных (матрицы, списки, таблицы данных)
+
+```{r}
+# matrix - двухмерный набор значений одного типа (например, каких-то измерений)
+# создаем одномерный вектор
+rnorm(8*12, mean=5000, sd=2000) # команда для создания 8*12 случайных чисел с заданным средним и стандартным отклонением
+# помещаем его значения в матрицу
+my_matrix1 = matrix(rnorm(8*12, 5000, 2000), nrow=8, ncol=12) # пример матрицы 8х12 со случайными значениями
+my_matrix1
+colnames(my_matrix1) = as.character(1:12) # задаем название столбцов (становятся текстом!)
+library(tidyverse) # много всего полезного, в т.ч. работа со строками
+str_split("ABCDEFGH", "", simplify = T) # генерим вектор из букв
+rownames(my_matrix1) = str_split("ABCDEFGH", "", simplify = T) # задаем название строк
+my_matrix1 # выглядит знакомо ;)
+str(my_matrix1)
+my_matrix1[1,] # первая строка (номер строки)
+my_matrix1[1,] = 1:12 # так можно модифицировать данные, замена должна соответствовать размеру ...
+my_matrix1[2,] = NA # ... или можно заменять все позиции матрицы на одно значение
+my_matrix1["A",] # первая строка (название строки)
+my_matrix1[c(1,3),] # первая и третья строка (номера строк)
+my_matrix1[c("A","C"),] # первая и третья строка (названия строк)
+my_matrix1[, 1] # первая колонка (номер)
+my_matrix1[, "1"] # первая колонка (название, поэтому в кавычках, это текст)
+my_matrix1[3, 11]
+my_matrix1[8, 12] = 100500
+my_matrix1*1000
+my_matrix1
+ncol(my_matrix1)
+nrow(my_matrix1)
+t(my_matrix1) # транспонировать матрицу, т.е. превратить колонки в строки
+
+# Если надо сложить одну переменную много разных типов данных - это список
+my_list1 = list(a=c(1,2,4), b=c("one", "two", "three"), c=3, d=age) # сразу задаем значения
+my_list1 
+str(my_list1)
+my_list1$a # обращаемся к элементу
+my_list1[["a"]] # обращаемся к элементу - второй способ
+b_element = my_list1[["a"]]
+b_element
+b_element[2]
+my_list1[["a"]][2] # выбираем второй элемент вектора b из списка my_list1 
+my_list1$e = "создаем новый элемент"
+my_list1[["last_one"]] = c("и", "последний", "элемент")
+str(my_list1)
+
+# пример использования списка
+my_list2 = list()
+my_list2$description = "Плашка FIA"
+my_list2$date = Sys.time() # эта команда выводит текущее время
+my_list2$plate = my_matrix1
+my_list2$session = sessionInfo() # эта команда выводит данные о версии R и загруженных библиотеках (пригодится для воспроизводимости!)
+
+# а еще многие функции выводят списки
+t.test_result = t.test(rnorm(8*12, mean=5000, sd=2000), mu = 4500)
+str(t.test_result)
+t.test_result$p.value # из объекта типа лист можно доставать нужное значение
+t.test(rnorm(8*12, mean=5000, sd=2000), mu = 4500)$p.value # или даже так
+
+# самый используемый тип данных - таблица данных (data.frame и ее расширения типа tibble, data.table)
+# такая таблица технически это список из разных типов колонок-векторов (численные, текстовые, факторные) одной длины
+my_df1 = data.frame(a=c(1,2,4), b=c("a", "b", "d"))
+my_df1
+str(my_df1)
+# с таблицей данных можно обращаться как со списком, а можно как с матрицей
+# почти все данные, которые придется обрабатывать, будут в формате таблиц данных
+```
+
+Арифметические операции с векторами, матрицами, таблицами
+
+```{r}
+my_vector1 = 1:20
+my_vector3 = 101:120
+my_vector1 + 5
+my_vector1 * 5
+my_vector1 + my_vector2
+my_vector4 = 1:21
+my_vector1 + my_vector3 # ошибка
+my_vector1 ^ 2
+log10(my_vector1)
+max(my_vector1)
+min(my_vector1)
+my_vector2 = c(169, 180, 157, 165, 190, NA, 185, 164, 171)
+max(my_vector2) # что-то пошло не так...
+na.omit(my_vector2)
+max(na.omit(my_vector2))
+```
+
+[Дополнительная информация](https://adv-r.hadley.nz/subsetting.html) про экстракцию подтаблиц и частей векторов, сортировку и т.п.
+
+### Использование функций
+
+```{r}
+# использование одной функции
+?rnorm
+rnorm(96) # аргументы по умолчанию: mean=0, sd=1
+rnorm(8*12)
+rnorm(8*12, mean=5000, sd=2000) # явно указанные аргументы
+rnorm(8*12, sd=2000, mean=5000) # явно указанные аргументы в другом порядке - не важно!
+rnorm(8*12, 5000, 2000) # аргументы указания названий в стандартном порядке (см. справку)
+rnorm(8*12, s=2000, m=5000) # сокращенные названия аргументов - первые буквы должны однозначно указывать
+
+# некоторые функции принимают аргументы в виде формул вида value ~ grouping1 + grouping2 ...
+my_data = data.frame(my_values = c(1, 2, 3, 1, 4, 3),
+                     my_grouping = as.factor(c(1, 1, 1, 2, 2, 2)))
+library(car)
+leveneTest(my_data$my_values, my_data$my_grouping)
+with(my_data, leveneTest(my_values, my_grouping)) # чтобы не писать my_data$ перед каждой переменной
+leveneTest(my_values ~ my_grouping, data = my_data) # пример формулы
+
+# использование нескольких функций: среднее полученного распределения
+my_distr1 = rnorm(8*12, sd=2000, mean=5000) # вывод функции можно сохранять в переменную
+mean(my_distr1)
+
+# можно вкладывать функции друг в друга, направляя вывод одной функции на вход (аргумент) другой
+mean(rnorm(8*12, sd=2000, mean=5000))
+
+# можно создавать pipelines (об этом далее будет более подробно)
+8*12 %>% # это значение будет первым аргументом следующей (rnorm)
+  rnorm(sd=2000, mean=5000) %>% # вывод этой функции будет первым аргументом следующей (mean)
+  mean() %>% # это значение будет первым аргументом следующей (round)
+  round(0)
+```
+
+### Собственная функция
+
+```{r}
+# пишем функцию для коэффициента вариации: CV = sd/mean*100%
+CV = function(x) sd(x)/mean(x)*100 # возвращает результат преобразования
+my_vector6 = rnorm(30, 50, 5)
+CV(my_vector6)
+
+# пишем функцию для вычисления дисперсии, которая нам выдаст несколько значений
+Var = function(x) {
+  result = list()
+  result$data = x
+  result$sum_sq = sum((x-mean(x))^2)
+  result$n = length(x)
+  result$value = result$sum_sq/(result$n - 1)
+  return(result) # задаем объект, который будет выводить функция (здесь это список)
+}
+```
+
+
+
+```{r}
+```
+
+### Pipelines концепт
+
+```r
+ y <- func3 ( func2( func1( x) ) )
+ y <- x %>% func1 %>% func2 %>% func3
+```
+
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(caret)
+
+rgamma(1000, 2,1) %>% ggqqplot()
+rgamma(1000, 2,1) %>% .^0.3 %>% scale() %>% ggqqplot()
+rgamma(1000, 2,1) %>% .^0.3 %>% scale() %>% as.tibble() %>% 
+  #filter(. > 0) %>% 
+  ggplot(aes(x=V1)) + geom_histogram()
+
+rgamma(1000, 2,1) %>% 
+  predict(BoxCoxTrans(.),.) %>% 
+  data.frame(x=.) %>% 
+  ggplot(aes(x=x)) + 
+  geom_histogram(aes(y=..density..)) + 
+  geom_density(fill="red", alpha=.3, col=NA)
+```
+
+### Чтение файла 
+
+### Excel, CSV etc.
+
+```{r}
+library(tidyverse)
+library(readxl) # XLS, XLSX, CSV
+
+path = "/Users/lapotok/Dropbox/study/biochem_statistics/materials_for_students/1/bad_data_example.xlsx"
+my_tbl = read_excel(path) # sheet=1
+my_tbl = read_excel("/Users/lapotok/Dropbox/study/biochem_statistics/materials_for_students/1/bad_data_example.xlsx")
+```
+
+* другие смежные функции read_csv, read_html
+* переменные 
+
+### Проверка и реформатирование
+
+```{r}
+# сначала смотрим глазами на все данные
+my_tbl
+my_tbl %>% View()
+str(my_tbl)
+
+# смотрим на часть таблицы
+head(my_tbl) # первые 6 (или сколько угодно, задаем параметр n)
+# выбираем       строки               колонки
+my_tbl %>% slice(c(1,2,3)) %>% select(c("Species", "Weight")) # можно задавать названия колонок ...
+my_tbl %>% slice(1:3) %>% select(c("Species", "Weight"))
+1:3 # так можно задавать список из последовательных значений
+seq(from=1, to=100, length.out = 10) # более сложный список по правилам
+seq(from=1, to=100, by = 10)
+
+my_tbl %>% slice(c(1,2,3)) %>% select(c(3, 2)) # ... можно и номера
+
+# выбираем строки по условиям
+my_tbl %>% filter(Weight>90)
+# выбираем колонки по условиям
+my_tbl %>% select_if(is.character)
+iris %>% select(starts_with("Petal"))
+
+my_tbl[c(1,2,4), c("Species", "Weight")]
+my_tbl[c(1,2,4), c(3,2)]
+#      строки    колонки
+my_tbl[, c("Species", "Weight")]
+# все строки и выбранные колонки
+my_tbl %>% select(c("Species", "Weight"))
+my_tbl[, c("Species", "Weight")]
+# все колонки и выбранные строки
+my_tbl %>% slice(c(1,2,4))
+my_tbl[c(1,2,4),]
+
+# проверяем значения конкретной переменной
+my_tbl %>% select("Species") %>% unique() # задаем имя переменной
+my_tbl[["Species"]] %>% unique() # то же, более компактоное представление в виде вектора
+my_tbl$Species %>% unique() # то же
+my_tbl[[3]] %>% unique() # то же
+
+# дубли
+my_tbl[["Пол"]] %>% unique()
+my_tbl = my_tbl %>% mutate_at("Пол", toupper) # uppercase
+
+# разбираемся с NA: при выполнении ряда проверок будем заменять часть значений на NA 
+library(naniar)
+my_tbl %>% replace_with_na_at("Num ticks", condition=~. < 100) # пример условия
+my_tbl = my_tbl %>% replace_with_na_all(condition=~ toupper(.) %in% c("", "NA")) # заменяем на NA значения "", "NA" (во всех регистрах - "Na", "na" тоже)
+my_tbl$Species
+toupper(my_tbl$Species)
+toupper(my_tbl$Species) %in% c("", "NA")
+my_tbl = my_tbl %>% replace_with_na_all(condition=~ str_detect(., "\\?")) # replace "*?*" values to NA
+my_tbl = my_tbl %>% replace_with_na_all(condition=~ str_detect(., "hz"))
+
+# разбираемся с опечатками и преобразуем переменную в числовой формат
+my_tbl = my_tbl %>% mutate_at("Weight", str_replace, pattern=",", replacement=".") %>% mutate_at("Weight", as.numeric)
+
+# преобразуем, если надо, в факторы категорийные переменные, кроме ID (там смысла нет!)
+my_tbl_f = my_tbl %>% mutate_at(c("Species", "Пол"), as.factor) 
+str(my_tbl_f)
+
+# WIDE to LONG
+my_tbl_long = my_tbl %>% gather("var", "val", -c("Species", "ID", "Пол"))
+```
+
+## Обработка
+
+```{r}
+# Анализируем видовой состав (категориальная переменная)
+my_tbl$Species
+table(my_tbl$Species)
+
+# Анализируем распределение по весам
+my_tbl$Weight
+
+# графически
+ggplot(my_tbl, aes(x=Weight)) + geom_histogram(aes(y = ..density..), fill='blue') + stat_density(geom="line")
+ggplot(my_tbl, aes(x=Weight)) + geom_histogram(aes(y = ..density..), fill='blue') + geom_density(fill='red', alpha=.5)
+
+# делим веса на категории и смотрим сколько особей в какой категории
+cut(my_tbl$Weight, b=5) # число равных промежутков
+cut(my_tbl$Weight, b=c(0, 50, 80, 100)) # точки для интервалов
+table(cut(my_tbl$Weight, b=c(0, 50, 80, 100))) # подсчет особей в каждой категории
+
+# считаем характеристики
+mean(my_tbl$Weight)
+my_tbl$Weight %>% mean() # то же самое
+median(my_tbl$Weight)
+var(my_tbl$Weight)
+sd(my_tbl$Weight)
+my_var = var(my_tbl$Weight)
+sqrt(my_var)
+max(my_tbl$Weight)
+min(my_tbl$Weight)
+range(my_tbl$Weight)
+
+# а можно по группам!
+my_tbl %>% group_by(Пол) %>% summarise_at("Weight", mean) # почему-то group_by хочет переменную без кавычек, а summarise_at - с кавычками!
+my_tbl %>% group_by(Пол) %>% summarise_at("Weight", sd)
+my_tbl %>% group_by(Пол) %>% summarise_at("Weight", funs(sd=sd))
+my_tbl %>% group_by(Пол) %>% summarise_at("Weight", funs(sd=sd)) %>% as.data.frame()
+my_tbl %>% group_by(Пол, Species) %>% summarise_at("Weight", funs(sd=sd))
+my_tbl %>% group_by(Пол, Species) %>% summarise_at("Weight", funs(sd, length))
+my_tbl %>% group_by(Пол, Species) %>% drop_na() %>% summarise_at("Weight", funs(sd))
+my_tbl %>% group_by(Пол, Species) %>% drop_na() %>% summarise_at("Weight", funs(sd, length))
+my_tbl %>% group_by(Пол) %>% summarise_at("Weight", funs(mean, sd))
+my_tbl %>% group_by(Пол) %>% summarise_at(vars("Weight", "Num ticks"), funs(mean, sd))
+
+# проверяем нормальность
+shapiro.test(my_tbl[["Weight"]]) # если p.value > 0.05 => нормальное распределение
+library(ggpubr)
+my_tbl %>% ggqqplot("Weight")
+shapiro.test.p.value = function(x) shapiro.test(x)$p.value > 0.05
+my_tbl %>% group_by(Пол) %>% summarise_at("Weight", funs(normality = shapiro.test.p.value))
+
+# проверяем гомогенность дисперсий
+bartlett.test(Petal.Length ~ Species, iris) # если p.value > 0.05 => гомогенная выборка
+
+# боксплот с вариациями
+# CLT
+# CI
+# t.test oneway (mean vs mu)
+# t.test independent (Student vs Welch)
+# t.test dependent
+# Kruskal-Wallis, Friedman test
+# power analysis
+# wilcox
+# anova, tukey
+# симуляции и бутстреп
+# DoE
+# автокорреляции
+# графики функций
+# boxcox transf
+
+RoundingTimes <-
+matrix(c(5.40, 5.50, 5.55,
+         5.85, 5.70, 5.75,
+         5.20, 5.60, 5.50,
+         5.55, 5.50, 5.40,
+         5.90, 5.85, 5.70,
+         5.45, 5.55, 5.60,
+         5.40, 5.40, 5.35,
+         5.45, 5.50, 5.35,
+         5.25, 5.15, 5.00,
+         5.85, 5.80, 5.70,
+         5.25, 5.20, 5.10,
+         5.65, 5.55, 5.45,
+         5.60, 5.35, 5.45,
+         5.05, 5.00, 4.95,
+         5.50, 5.50, 5.40,
+         5.45, 5.55, 5.50,
+         5.55, 5.55, 5.35,
+         5.45, 5.50, 5.55,
+         5.50, 5.45, 5.25,
+         5.65, 5.60, 5.40,
+         5.70, 5.65, 5.55,
+         6.30, 6.30, 6.25),
+       nrow = 22,
+       byrow = TRUE,
+       dimnames = list(1 : 22,
+                       c("Round Out", "Narrow Angle", "Wide Angle")))
+
+RoundingTimes %>% 
+  as.tibble() %>% 
+  gather("var", "val") %>% 
+  ggplot(aes(var, val, col=var)) +
+  geom_boxplot() + 
+  geom_point() +
+  map(RoundingTimes, geom_line,) +
+  theme_classic()
+```
+

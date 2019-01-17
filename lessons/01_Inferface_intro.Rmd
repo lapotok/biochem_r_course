@@ -1,0 +1,69 @@
+---
+title: "Введение в R: знакомство, достоинства, интерфейс"
+output: html_notebook
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Интерфейс
+
+* коммандная строка
+* окно документа
+* графики
+* справка
+
+# Знакомство
+
+```{r}
+# загружаем необходимые библиотеки
+library(tidyverse)  # интерфейс пайплайна
+library(magrittr)   # интерфейс пайплайна (дополнительно)
+library(ggpubr)     # графики
+library(plotly)     # интерактивные графики
+
+1 + 4*5 + (2+3)^2
+
+sqrt(9)
+
+log(sqrt(abs(-10)))
+
+-10 %>% abs() %>% sqrt() %>% log()
+
+my_data = readxl::read_excel(file.choose()) # protein_stability.xlsx
+str(my_data)
+
+# график
+g = ggboxplot(my_data, "Sample", "ConcUndiluted", color = "Sample")
+g
+g %>% ggplotly()
+esquisse::ggplot_to_ppt("g")
+
+# дисперсионный анализ: есть ли различие между средними?
+lm(ConcUndiluted ~ Sample, data = my_data) %>% anova()
+```
+
+# Достоинства
+
+* оконный интерфейс (Origin)
+
+Как запомнить/записать какие опции выбраны? Как быстро можно воспроизвести анализ с новыми данными?
+
+![](imgs/OriginSettings.png)
+
+* командная строка
+
+```{r eval = F}
+my_data_anova = 
+  lm(ConcUndiluted ~ Sample, data = my_data) %>% # источник и модель
+  aov() # тип анализа - дисперсионный
+
+my_data_anova %>% 
+  summary() # результат анализа
+
+my_data %>%
+  rstatix::t_test(ConcUndiluted ~ Sample, p.adjust.method = "holm") # попарное сравнение т-тестом с поправкой Холма
+```
+
+Можно прочитать все этапы анализа, отследить, что ничего не забыл (галочки в оконном интерфейсе). Сравнить с предыдущим анализом, поделиться протоколом анализа с коллегами. Легко воспроизвести и загуглить ошибку и найти точную инструкцию как и что делать (с окошками сложнее).
