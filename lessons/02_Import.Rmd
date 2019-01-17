@@ -1,0 +1,34 @@
+---
+title: "Статистика в `R` для биохимиков"
+date: "`r format(Sys.Date(), '%Y.%m.%d')`"
+output: 
+  html_document:
+    dev: 'svg'
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    css: ../style.css
+    
+---
+
+```{r setup, include=FALSE}
+source("../style.R")
+```
+
+# Импорт данных
+
+## Импорт из буфера обмена (скопировано в Excel)
+
+```{r eval = T}
+# + указать параметры dec, header (sep = "\t" обозначает табуляцию)
+d = read.table(text = "СКОПИРОВАТЬ ДАННЫЕ СЮДА", sep = "\t") 
+
+# например получится так
+d = read.table(text = "Names 	Values
+Vasya	160.6
+Katya	170
+Fedya	180", header = T, dec = ".", sep = "\t")
+
+d
+```

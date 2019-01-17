@@ -1,0 +1,4 @@
+h1, h2, h3, p, li {font-family: Fira Sans, Myriad,Arial;}
+h1 {font-size: 30px;}
+h2 {font-size: 24px;}
+pre.r, code {font-family:Consolas,monaco,monospace; background-color: #fdfdfd;}

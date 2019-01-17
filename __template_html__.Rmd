@@ -1,0 +1,58 @@
+---
+title: "Шаблон HTML страницы"
+date: "`r format(Sys.Date(), '%Y.%m.%d')`"
+output: 
+  html_document:
+    dev: 'svg'
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    css: style.css
+    
+---
+
+```{r setup, include=FALSE}
+source("style.R")
+```
+
+# Общий заголовок
+
+## Подзаголовок №1
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Подзаголовок №2
+
+Простой график
+
+```{r echo=T, eval=T}
+plot(1:25, col=1:25, pch=1:25)
+```
+
+```{r echo=T, eval=T}
+library(ggplot2)
+g = ggplot(iris, aes(Species, Petal.Length)) +
+  geom_boxplot()
+
+g
+```
+
+```{r echo=T, eval=T}
+library(plotly)
+
+ggplotly(g)
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+$$
+x = 3 \cdot 4
+$$
