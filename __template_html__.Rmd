@@ -6,7 +6,8 @@ output:
     dev: 'svg'
     toc: true
     toc_depth: 3
-    toc_float: true
+    toc_float: 
+      toc_collapsed: false
     number_sections: true
     css: style.css
     

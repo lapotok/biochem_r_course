@@ -6,7 +6,8 @@ output:
     dev: 'svg'
     toc: true
     toc_depth: 3
-    toc_float: true
+    toc_float: 
+      toc_collapsed: false
     number_sections: true
     css: ../style.css
     
@@ -18,7 +19,44 @@ source("../style.R")
 
 # Импорт данных
 
+## Тестовые наборы данных в `R` (datasets)
+
+Их много, они есть в самом `R` и во многих пакетах.
+
+```{r eval = T}
+data(iris) # загрузим в память
+
+# посмотрим
+str(iris)
+```
+
+## Ввод данных непосредственно в `R`
+
+Простые небольшие тестовые данные можно ввести/сгенерировать с помощью комманд. Далее приведен пример сгенерированных данных с использованием наиболее часто для этого используемых комманд.
+
+```{r eval = T}
+d = 
+  data.frame(
+    random_values = rnorm(n = 5, mean = 50, sd = 10), # rnorm() - случайные числа
+    groups1 = c("Группа 1", 
+                "Группа 1", 
+                "Группа 1", 
+                "Группа 2", 
+                "Группа 2"), # c() - вектор (текст, названия групп)
+    groups2 = c(rep("Группа 1", 3),  # тот же вектор, но иначе
+                rep("Группа 2", 2)), # rep() - генерация повторов
+    particular_values = c(56, 34, 56, 12, 199), # c() - вектор (числа)
+    randomized_numbers = sample(1:5) # sample() - случайно перестановленные числа 1-5
+  )
+
+d
+
+str(d)
+```
+
 ## Импорт из буфера обмена (скопировано в Excel)
+
+Быстрый способ 
 
 ```{r eval = T}
 # + указать параметры dec, header (sep = "\t" обозначает табуляцию)
@@ -31,4 +69,24 @@ Katya	170
 Fedya	180", header = T, dec = ".", sep = "\t")
 
 d
+```
+
+## Импорт из файлов
+
+Самый продвинутый пакет для импорта из разных форматов - `rio`. Там есть две отличные функции - `import()` и `export()`. Они сами пытаются справиться со всеми возможными форматами. Если не узнает формат - можно ей помочь, указав его. 
+
+[Здесь](https://cran.r-project.org/web/packages/rio/vignettes/rio.html) можно побольше почитать про него.
+
+```{r eval = T}
+library(rio)
+# можно открыть файл в форматах XLS/XLSX
+iris_xlsx = import("../data/iris.xlsx")
+# можно открыть файл в формате CSV
+iris_csv = import("../data/iris.csv")
+# если функция не может определить формат - можно его указать
+iris_csv = import("../data/iris.csv", format = "csv")
+# можно открыть файл с сайта
+iris_from_web = import("https://github.com/lapotok/biochem_r_course/raw/master/data/iris.xlsx")
+
+head(iris_xlsx)
 ```

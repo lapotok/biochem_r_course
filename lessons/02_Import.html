@@ -71,7 +71,7 @@ h6 {
 }
 </style>
 
-<link href="data:text/css;charset=utf-8,h1%2C%20h2%2C%20h3%2C%20p%2C%20li%20%7Bfont%2Dfamily%3A%20Fira%20Sans%2C%20Myriad%2CArial%3B%7D%0Ah1%20%7Bfont%2Dsize%3A%2030px%3B%7D%0Ah2%20%7Bfont%2Dsize%3A%2024px%3B%7D%0Apre%2Er%2C%20code%20%7Bfont%2Dfamily%3AConsolas%2Cmonaco%2Cmonospace%3B%20background%2Dcolor%3A%20%23fdfdfd%3B%7D" rel="stylesheet" type="text/css" />
+<link href="data:text/css;charset=utf-8,h1%2C%20h2%2C%20h3%2C%20p%2C%20li%20%7Bfont%2Dfamily%3A%20Fira%20Sans%2C%20Myriad%2CArial%3B%7D%0Ah1%20%7Bfont%2Dsize%3A%2030px%3B%7D%0Ah2%20%7Bfont%2Dsize%3A%2024px%3B%7D%0Acode%20%7Bfont%2Dfamily%3AConsolas%2Cmonaco%2Cmonospace%3B%20background%2Dcolor%3A%20%23ffffff%3B%20%7D%0Apre%2Er%20code%20%7Bfont%2Dfamily%3AConsolas%2Cmonaco%2Cmonospace%3B%7D" rel="stylesheet" type="text/css" />
 
 </head>
 
@@ -128,7 +128,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2",
+      selectors: "h1,h2,h3",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {
@@ -227,8 +227,55 @@ div.tocify {
 
 <div id="-" class="section level1">
 <h1><span class="header-section-number">1</span> Импорт данных</h1>
+<div id="----r-datasets" class="section level2">
+<h2><span class="header-section-number">1.1</span> Тестовые наборы данных в <code>R</code> (datasets)</h2>
+<p>Их много, они есть в самом <code>R</code> и во многих пакетах.</p>
+<pre class="r"><code>data(iris) # загрузим в память
+
+# посмотрим
+str(iris)</code></pre>
+<pre><code>'data.frame':   150 obs. of  5 variables:
+ $ Sepal.Length: num  5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...
+ $ Sepal.Width : num  3.5 3 3.2 3.1 3.6 3.9 3.4 3.4 2.9 3.1 ...
+ $ Petal.Length: num  1.4 1.4 1.3 1.5 1.4 1.7 1.4 1.5 1.4 1.5 ...
+ $ Petal.Width : num  0.2 0.2 0.2 0.2 0.2 0.4 0.3 0.2 0.2 0.1 ...
+ $ Species     : Factor w/ 3 levels &quot;setosa&quot;,&quot;versicolor&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...</code></pre>
+</div>
+<div id="----r" class="section level2">
+<h2><span class="header-section-number">1.2</span> Ввод данных непосредственно в <code>R</code></h2>
+<p>Простые небольшие тестовые данные можно ввести/сгенерировать с помощью комманд. Далее приведен пример сгенерированных данных с использованием наиболее часто для этого используемых комманд.</p>
+<pre class="r"><code>d = 
+  data.frame(
+    random_values = rnorm(n = 5, mean = 50, sd = 10), # rnorm() - случайные числа
+    groups1 = c(&quot;Группа 1&quot;, 
+                &quot;Группа 1&quot;, 
+                &quot;Группа 1&quot;, 
+                &quot;Группа 2&quot;, 
+                &quot;Группа 2&quot;), # c() - вектор (текст, названия групп)
+    groups2 = c(rep(&quot;Группа 1&quot;, 3),  # тот же вектор, но иначе
+                rep(&quot;Группа 2&quot;, 2)), # rep() - генерация повторов
+    particular_values = c(56, 34, 56, 12, 199), # c() - вектор (числа)
+    randomized_numbers = sample(1:5) # sample() - случайно перестановленные числа 1-5
+  )
+
+d</code></pre>
+<pre><code>  random_values  groups1  groups2 particular_values randomized_numbers
+1      56.94590 Группа 1 Группа 1                56                  5
+2      61.34567 Группа 1 Группа 1                34                  1
+3      43.93216 Группа 1 Группа 1                56                  3
+4      48.47611 Группа 2 Группа 2                12                  2
+5      53.58736 Группа 2 Группа 2               199                  4</code></pre>
+<pre class="r"><code>str(d)</code></pre>
+<pre><code>'data.frame':   5 obs. of  5 variables:
+ $ random_values     : num  56.9 61.3 43.9 48.5 53.6
+ $ groups1           : Factor w/ 2 levels &quot;Группа 1&quot;,&quot;Группа 2&quot;: 1 1 1 2 2
+ $ groups2           : Factor w/ 2 levels &quot;Группа 1&quot;,&quot;Группа 2&quot;: 1 1 1 2 2
+ $ particular_values : num  56 34 56 12 199
+ $ randomized_numbers: int  5 1 3 2 4</code></pre>
+</div>
 <div id="------excel" class="section level2">
-<h2><span class="header-section-number">1.1</span> Импорт из буфера обмена (скопировано в Excel)</h2>
+<h2><span class="header-section-number">1.3</span> Импорт из буфера обмена (скопировано в Excel)</h2>
+<p>Быстрый способ</p>
 <pre class="r"><code># + указать параметры dec, header (sep = &quot;\t&quot; обозначает табуляцию)
 d = read.table(text = &quot;СКОПИРОВАТЬ ДАННЫЕ СЮДА&quot;, sep = &quot;\t&quot;) 
 
@@ -243,6 +290,25 @@ d</code></pre>
 1 Vasya  160.6
 2 Katya  170.0
 3 Fedya  180.0</code></pre>
+</div>
+<div id="--" class="section level2">
+<h2><span class="header-section-number">1.4</span> Импорт из файлов</h2>
+<p>Самый продвинутый пакет для импорта из разных форматов - <code>rio</code>. Там есть две отличные функции - <code>import()</code> и <code>export()</code>. Они сами пытаются справиться со всеми возможными форматами. Если не узнает формат - можно ей помочь, указав его.</p>
+<p><a href="https://cran.r-project.org/web/packages/rio/vignettes/rio.html">Здесь</a> можно побольше почитать про него.</p>
+<pre class="r"><code>library(rio)
+iris_xlsx = import(&quot;../data/iris.xlsx&quot;)
+iris_csv = import(&quot;../data/iris.csv&quot;)
+iris_csv = import(&quot;../data/iris.csv&quot;, format = &quot;csv&quot;)
+iris_from_web = import(&quot;https://github.com/lapotok/biochem_r_course/raw/master/data/iris.xlsx&quot;)
+
+head(iris_xlsx)</code></pre>
+<pre><code>  Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+1          5.1         3.5          1.4         0.2  setosa
+2          4.9         3.0          1.4         0.2  setosa
+3          4.7         3.2          1.3         0.2  setosa
+4          4.6         3.1          1.5         0.2  setosa
+5          5.0         3.6          1.4         0.2  setosa
+6          5.4         3.9          1.7         0.4  setosa</code></pre>
 </div>
 </div>
 
