@@ -5,4 +5,5 @@ knitr::opts_chunk$set(fig.align  = "center",
                       eval       = F, 
                       comment    = "", 
                       warning    = F,
-                      message    = F)
+                      message    = F,
+                      cache      = T)
