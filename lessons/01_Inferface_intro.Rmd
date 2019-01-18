@@ -1,11 +1,6 @@
 ---
-title: "Введение в R: знакомство, достоинства, интерфейс"
-output: html_notebook
+title: 'Введение в R: знакомство, достоинства, интерфейс'
 ---
-
-```{r setup}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 # Интерфейс
 
@@ -16,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Знакомство
 
-```{r}
+```{r eval = F}
 # загружаем необходимые библиотеки
 library(tidyverse)  # интерфейс пайплайна
 library(magrittr)   # интерфейс пайплайна (дополнительно)

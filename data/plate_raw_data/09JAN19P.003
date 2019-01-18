@@ -1,0 +1,22 @@
+LABSYSTEMS GENESIS V3.05   Results   Wednesday, 09 January 2019   18:19
+Raw data filename     : C:\genlite\protocol\09JAN19W.003
+Processed by Protocol : c:\genlite\protocol\492.prt
+Plate layout file     : c:\genlite\protocol\492.plt
+Reading type          : Single Wavelength, One Reading
+Instrument version    : MULTISKAN EX    PRIMARY EIA V. 2.3          
+Filter 1              : 492nm
+Lag time              : 00:00:00
+Mix                   : NO
+
+Raw data values (calculated):
+   1      2      3      4      5      6      7      8      9      10     11     12     
+A  0.112  0.366  0.230  0.153  1.303  0.060  0.041  0.061  0.042  0.034  0.044  0.038 
+B  0.089  0.157  0.137  0.086  0.870  0.090  0.097  0.110  0.037  0.046  0.036  0.053 
+C  0.094  0.108  0.093  0.067  0.448  0.076  0.071  0.049  0.045  0.047  0.066  0.039 
+D  0.063  0.084  0.073  0.065  0.193  0.056  0.044  0.054  0.043  0.045  0.039  0.041 
+E  0.079  0.089  0.068  0.058  0.107  0.060  0.058  0.054  0.062  0.044  0.048  0.044 
+F  0.055  0.065  0.058  0.055  0.068  0.050  0.050  0.050  0.041  0.047  0.043  0.040 
+G  0.063  0.055  0.055  0.049  0.062  0.058  0.066  0.059  0.047  0.044  0.041  0.046 
+H  0.056  0.053  0.054  0.052  0.055  0.053  0.052  0.050  0.055  0.041  0.042  0.047 
+
+

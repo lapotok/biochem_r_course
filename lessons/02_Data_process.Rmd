@@ -1,19 +1,9 @@
 ---
 title: "Подготовка данных в R"
-output: 
-#  word_document
-  html_document
 ---
-<style>
-h1, h2, h3, p, li {font-family: Fira Sans, Myriad,Arial;}
-pre.r, code {font-family:Consolas,monaco,monospace; background-color: #fdfdfd;}
-</style>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = T, eval=F, comment = "")
-# делаем картинки поменьше в rnotebook
-library(repr)
-options(repr.plot.width=3, repr.plot.height=3)
+source("../style.R")
 ```
 
 ## Подготовка данных

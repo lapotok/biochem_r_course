@@ -7,3 +7,6 @@ knitr::opts_chunk$set(fig.align  = "center",
                       warning    = F,
                       message    = F,
                       cache      = T)
+options(
+  width = 100
+)

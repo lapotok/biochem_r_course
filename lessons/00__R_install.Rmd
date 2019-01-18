@@ -1,6 +1,5 @@
 ---
 title: "Установка R"
-output: html_notebook
 ---
 
 # Установка базового пакета и RStudio

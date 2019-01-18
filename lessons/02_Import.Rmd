@@ -1,5 +1,5 @@
 ---
-title: "Статистика в `R` для биохимиков"
+title: "Импорт данных и их предобработка"
 date: "`r format(Sys.Date(), '%Y.%m.%d')`"
 ---
 
@@ -46,17 +46,17 @@ str(d)
 
 ## Импорт из буфера обмена (скопировано в Excel)
 
-Быстрый способ 
+Быстрый способ для начинающих - открыть таблицу в Excel, скопировать и вставить в `R`.
 
 ```{r eval = T}
-# + указать параметры dec, header (sep = "\t" обозначает табуляцию)
-d = read.table(text = "СКОПИРОВАТЬ ДАННЫЕ СЮДА", sep = "\t") 
-
-# например получится так
-d = read.table(text = "Names 	Values
+copypasted = 
+"Names 	Values
 Vasya	160.6
 Katya	170
-Fedya	180", header = T, dec = ".", sep = "\t")
+Fedya	180"
+
+# sep - разделитель (табуляция), dec - десятичный разделитель, header - присутствуют ли 
+d = read.table(text = copypasted, sep = "\t", dec = ".", header = T) 
 
 d
 ```
@@ -68,15 +68,80 @@ d
 [Здесь](https://cran.r-project.org/web/packages/rio/vignettes/rio.html) можно побольше почитать про него.
 
 ```{r eval = T}
-library(rio)
 # можно открыть файл в форматах XLS/XLSX
-iris_xlsx = import("../data/iris.xlsx")
+iris_xlsx = rio::import("../data/iris.xlsx")
 # можно открыть файл в формате CSV
-iris_csv = import("../data/iris.csv")
+iris_csv = rio::import("../data/iris.csv")
 # если функция не может определить формат - можно его указать
-iris_csv = import("../data/iris.csv", format = "csv")
+iris_csv = rio::import("../data/iris.csv", format = "csv")
 # можно открыть файл с сайта
-iris_from_web = import("https://github.com/lapotok/biochem_r_course/raw/master/data/iris.xlsx")
+iris_from_web = rio::import("https://github.com/lapotok/biochem_r_course/raw/master/data/iris.xlsx")
 
 head(iris_xlsx)
+rio::export(iris_xlsx, "../data/iris2.txt")
 ```
+
+Не все файлы состоят только из целевой табличной информации. Например, файл спектра, генерируемого прибором Ultraspec 2100 pro, содержит в первых строках таблицы метаданные про измерение.
+
+```{r eval = T}
+# файл с метаданными и табличкой
+spectrum = rio::import("../data/BSA_spectrum.xlsx")
+str(spectrum) # фигня!
+head(spectrum, n = 20) # ага, надо начать с 18 строки!
+spectrum = rio::import("../data/BSA_spectrum.xlsx", skip = 17)
+str(spectrum) # отлично!
+head(spectrum)
+```
+
+Импортируем текстовый файл, разделенный знаками табуляции (формат "tsv"), также содержащий метаданные. Вот как он выглядит.
+
+```
+LABSYSTEMS GENESIS V3.05   Results   Wednesday, 09 January 2019   17:29
+Raw data filename     : C:\genlite\protocol\09JAN19W.001
+Processed by Protocol : c:\genlite\protocol\450.prt
+Plate layout file     : c:\genlite\protocol\450.plt
+Reading type          : Single Wavelength, One Reading
+Instrument version    : MULTISKAN EX    PRIMARY EIA V. 2.3          
+Filter 1              : 450nm
+Lag time              : 00:00:00
+Mix                   : NO
+
+Raw data values (calculated):
+   1      2      3      4      5      6      7      8      9      10     11     12     
+A  3.021  2.942  2.961  2.980  2.335  1.102  0.482  0.273  0.140  0.102  0.096  0.105 
+B  3.387  3.739  3.062  3.438  2.234  1.215  0.583  0.278  0.200  0.163  0.179  0.219 
+C  3.137  2.953  2.924  2.939  2.366  1.266  0.579  0.276  0.209  0.130  0.125  0.108 
+D  0.038  0.035  0.034  0.033  0.033  0.032  0.034  0.030  0.046  0.032  0.033  0.031 
+E  0.035  0.031  0.035  0.034  0.034  0.033  0.044  0.046  0.046  0.037  0.047  0.036 
+F  0.035  0.032  0.034  0.039  0.036  0.033  0.032  0.032  0.034  0.033  0.034  0.033 
+G  0.032  0.033  0.035  0.035  0.038  0.033  0.035  0.033  0.036  0.035  0.037  0.034 
+H  0.044  0.047  0.045  0.043  0.045  0.043  0.034  0.036  0.035  0.032  0.034  0.032 
+```
+А теперь попробуем из него вытащить нужные данные.
+
+```{r eval = T}
+plate = rio::import("../data/plate_raw_data/09Jan19P.001", format = "tsv", skip = 10)
+str(plate)
+head(plate, n = 20)
+```
+
+А если таких файлов много? Надо создать список нужных файлов и по очереди загрузить их в цикле.
+
+```{r eval = T}
+path = "../data/plate_raw_data"
+dir(path)
+dir(path, pattern = ".001$") # ограничим набор
+
+plates = list() # сюда будем сохранять данные
+for(file in dir(path, pattern = ".001$")){
+  filename = paste(path, file, sep = "/")
+  print(filename)
+  plates[[filename]] = rio::import(filename, format = "tsv", skip = 10)
+}
+
+plates
+```
+
+Как правило, для большей части файлов этого бывает достаточно.
+
+Если требуется указание дополнительных параметров (десятичный разделитель, пустые значения и т.п.), можно обратиться к другим функциям.
