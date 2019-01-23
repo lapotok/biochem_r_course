@@ -14,16 +14,16 @@ source("../style.R")
 $$
 \begin{align}
 \sigma^2 &= \frac{\sum_{i=1}^n(x_i-\mu)^2}{n} \\
-s^2 &= \frac{\sum_{i=1}^n(x_i-\bar{x})^2}{n-1}
+s^2 &= \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n-1}
 \end{align}
 $$
 
 ## Обычное объяснение
 
-* Мы не знаем истинного среднего  $\mu$, а только выборочную оценку $\bar{x}$. 
-* Выборочная оценка расчитывается как $\bar{x} = \frac{x_1+x_2+\dots+x_n}{n}$
-* Если мы знаем $\bar{x}$, то нам не нужны для расчета все $n$ элементов выборки, а достаточно лишь $n-1$ элементов 
-  (т.е. варьировать могут только $n-1$ элементов из $n$, они друг от друга не зависимы и их число называется числом степеней свободы $df$). 
+* Мы не знаем истинного среднего  $\mu$, а только выборочную оценку $\overline{x}$; 
+* Выборочная оценка расчитывается как $\overline{x} = \frac{x_1+x_2+\dots+x_n}{n}$
+* Если мы знаем $\overline{x}$, то нам не нужны для расчета все $n$ элементов выборки, а достаточно лишь $n-1$ элементов 
+    (т.е. варьировать могут только $n-1$ элементов из $n$, они друг от друга не зависимы и их число называется числом степеней свободы $df$). 
 * Поэтому при расчете выборочной дисперсии мы делим сумму квадратов на число степеней свободы вместо числа наблюдений. 
 
 Как-то от этого яснее не становится. Почему для стандартной ошибки среднего в формуле $SEM = \frac{s}{\sqrt{n}}$ не надо $n$ заменять на $n-1$? Как определить когда на что делить? Если есть $n$ каких-то элементов, то почему делить не на $n$ для усреднения?
@@ -32,23 +32,26 @@ $$
 
 Для начала полезное наблюдение: дисперсии можно суммировать (например, если будем расчитывать дисперсию суммы весов случайных пар девочка+мальчик, то дисперсия таких масс пар будет равна сумме дисперсий).
 $$
-Var(♂+♀) = Var(♂) + Var(♀)
+\mathrm{Var}(♂+♀) = \mathrm{Var}(♂) + \mathrm{Var}(♀)
 $$
+
+Еще один пример. Допустим нам надо набрать 1000 мкл, но у нас нет пипетки на 1 мл. Мы берем пипетку на 100 мкл и 10 раз набираем ею объем 100 мкл. При этом дисперсия для такого процесса будет равна $\mathrm{Var}(X_1+X_2+\dots+X_{10})=10\cdot\mathrm{Var}(X)$. На примере моей пипетки на 100 мкл, при наборе объема 100 мкл дисперсия составляет $0.245\ мкл^2$ ($sd = 0.496\ мкл$), тогда как при десятикратном отборе объема она составит $2.45\ мкл^2$ ($sd = 0.775\ мкл$).
+
 _А теперь само объяснение._
 
 ---
 
 ### Причины смещенности оценки дисперсии
 
-Мы **не знаем истинного среднего**, оно может быть равно выборочному среднему, но скороее всего нет (м.б. $\mu = \bar{x}$ или $\mu \ne \bar{x}$). Соответственно, и отклонения $x_i$ от $\mu$ и от $\bar{x}$ будут отличаться. Но в какую сторону и почему?
+Мы **не знаем истинного среднего**, оно может быть равно выборочному среднему, но скороее всего нет (м.б. $\mu = \overline{x}$ или $\mu \ne \overline{x}$). Соответственно, и отклонения $x_i$ от $\mu$ и от $\overline{x}$ будут отличаться. Но в какую сторону и почему?
 
 
 Выборочное среднее минимизирует сумму квадратов отклонений (т.е. суммы квадратов отклонений от выборочного среднего будут меньше, чем от любого другого числа $\hat{\mu}$)
 $$
-\bar{x}: \sum_{i=1}^n(x_i-\bar{x})^2 = \min_{\hat{\mu}}(\sum_{i=1}^n(x_i-\hat{\mu})^2)
+\overline{x}: \sum_{i=1}^n(x_i-\overline{x})^2 = \min_{\hat{\mu}}(\sum_{i=1}^n(x_i-\hat{\mu})^2)
 $$
 
-Посмотрим на иллюстрацию, на которой выборочное среднее довольно сильно отличается от истинного среднего $\mu$. Можно заметить, что расстояния от отдельных точек до выборочного среднего $\bar{x}$ (синие линии) гораздо меньше, чем до истинного среднего $\mu$ (красные линии).
+Посмотрим на иллюстрацию, на которой выборочное среднее довольно сильно отличается от истинного среднего $\mu$. Можно заметить, что расстояния от отдельных точек до выборочного среднего $\overline{x}$ (синие линии) гораздо меньше, чем до истинного среднего $\mu$ (красные линии).
 
 ```{r echo=F, eval=T, fig.width=7, fig.height=3}
 library(tidyverse)
@@ -104,25 +107,73 @@ library(patchwork)
 gb + gm
 ```
 
-Соответственно, сумма квадратов отклонений от истинного среднего $\mu$ будет больше, чем от выборочного среднего $\bar{x}$ (или равно, если $\mu = \bar{x}$).
+Соответственно, сумма квадратов отклонений от истинного среднего $\mu$ будет больше, чем от выборочного среднего $\overline{x}$ (или равно, если $\mu = \overline{x}$).
 $$
-\sum_{i=1}^n(x_i-\mu)^2 \ge \sum_{i=1}^n(x_i-\bar{x})^2
+\sum_{i=1}^n(x_i-\mu)^2 \ge \sum_{i=1}^n(x_i-\overline{x})^2
 $$
 
 Таким образом, из-за того что **мы не знаем истинное среднее (неточно оцениваем), мы считаем неправильные отклонения и тем самым занижаем значение дисперсии**.
 
-Неточность определения среднего в выборке ($\bar{x}$ - среднее арифметическое) выражается дисперсией среднего арифметического (или его корнем, т.е. стандартной ошибкой среднего).
+### Вывод формулы
+
+Если попытаться оценить разницу между истинной дисперсией $\sigma^2$ и ее выборочной смещенной оценкой $s_\text{unbiased}^2 = \frac{1}{n}\sum_{i=1}^n(x_i-\overline{x})^2$, то [можно показать](https://en.wikipedia.org/wiki/Bessel%27s_correction#Proof_of_correctness_%E2%80%93_Alternate_3), что она равна $s_{\overline{x}}^2 = \frac{\sigma^2}{n}$.
+
 $$
-s_{\bar{x}}^2 = \frac{s^2}{n}
+\begin{align} 
+\operatorname{E} \left[ \sigma^2 - s_\text{biased}^2 \right] &= \operatorname{E}\left[  (\overline{x}   - \mu)^2 \right] \\
+&= \operatorname{Var} (\overline{x}) \\
+&= \frac{\sigma^2}{n}
+\end{align}
 $$
 
-### Вывод формулы
+
+$$
+\begin{align}
+\underset{s_\text{biased}^2}{\underbrace{\mathbf{E}\left[\left(x_{i}-\overline{x}\right)^{2}\right]}}
+&=\underset{\sigma^{2}}{\underbrace{\mathbf{E}\left[\left(x_{i}-\mu\right)^{2}\right]}}-\underset{\frac{\sigma^{2}}{n}}{\underbrace{\mathbf{E}\left[\left(\overline{x}-\mu\right)^{2}\right]}}\\
+&=\sigma^2-\frac{\sigma^2}{n}\\
+&=\frac{n-1}{n}\cdot\sigma^2
+\end{align}
+$$
+Поэтому
+
+$$
+\begin{align}
+\sigma^2 &= s_\text{unbiased} \\
+&=\frac{n}{n-1}\cdot s_\text{biased}^2\\
+&=\frac{n}{n-1}\cdot \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n}\\
+&=\frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n-1}
+\end{align}
+$$
+
+
+$$
+\begin{align}
+s_\text{biased}^2 - s_\text{unbiased}^2 &= s_\text{biased}^2 - \sigma^2\\
+&=
+\end{align}
+
+
+\\
+\\
+\\
+\sigma^2 = s_\text{unbiased}^2 = s_\text{biased}^2 + s_{\overline{x}}^2
+$$
+
+Эта разница представляет собой неточность определения среднего в выборке ($\overline{x}$ - среднее арифметическое) и соответствует дисперсии среднего арифметического $s_{\overline{x}}^2 = \frac{\sigma^2}{n}$ (корень из нее - стандартной ошибкой среднего, $SEM=\frac{\sigma}{\sqrt{n}}$).
+
+Таким образом, 
+
+$$
+\begin{align}
+s_\text{biased}^2 &= s_{\overline{x}}^2 - \sigma^2 \\
+&= \frac{\sigma^2}{n} - \sigma^2 \\
+&= \frac{}{}
+\end{align}
+$$
 
 Итак, у нас есть неправильная (смещенная, biased) оценка выборочной дисперсии $s_\text{biased}^2$. А теперь выведем формулу правильной (несмещенной, unbiased) оценки выборочной дисперсии $s_\text{unbiased}^2$.
 
-$$
-s_\text{unbiased}^2 = s_\text{biased}^2 + s_{\bar{x}}^2
-$$
 
 Мысль: 
 
@@ -131,39 +182,39 @@ $$\begin{array}{c}
 x_{i}\mbox{ от }\mu.
 \end{array}=\begin{array}{c}
 \mbox{Отклонения}\\
-x_{i}\mbox{ от }\bar{x}
+x_{i}\mbox{ от }\overline{x}
 \end{array}+\begin{array}{c}
 \mbox{Отклонения}\\
-\bar{x}\mbox{ от }\mu
+\overline{x}\mbox{ от }\mu
 \end{array}$$
 
 может быть записана в виде следующей формулы
 
-$$\mathbf{E}\left[\left(x_{i}-\mu\right)^{2}\right]=\mathbf{E}\left[\left(x_{i}-\bar{x}\right)^{2}\right]+\mathbf{E}\left[\left(\bar{x}-\mu\right)^{2}\right]$$
+$$\mathbf{E}\left[\left(x_{i}-\mu\right)^{2}\right]=\mathbf{E}\left[\left(x_{i}-\overline{x}\right)^{2}\right]+\mathbf{E}\left[\left(\overline{x}-\mu\right)^{2}\right]$$
 
 что можно переписать в виде
 
-$$\mathbf{E}\left[\left(x_{i}-\bar{x}\right)^{2}\right]=\underset{\sigma^{2}}{\underbrace{\mathbf{E}\left[\left(x_{i}-\mu\right)^{2}\right]}}-\underset{\frac{\sigma^{2}}{n}}{\underbrace{\mathbf{E}\left[\left(\bar{x}-\mu\right)^{2}\right]}}=\frac{n-1}{n}\sigma^2.$$
+$$\mathbf{E}\left[\left(x_{i}-\overline{x}\right)^{2}\right]=\underset{\sigma^{2}}{\underbrace{\mathbf{E}\left[\left(x_{i}-\mu\right)^{2}\right]}}-\underset{\frac{\sigma^{2}}{n}}{\underbrace{\mathbf{E}\left[\left(\overline{x}-\mu\right)^{2}\right]}}=\frac{n-1}{n}\sigma^2.$$
 
 Таким образом, если посчитать выборочную дисперсию по формуле дисперсии генеральной совокупности (нескорректированная выборочная дисперсия), она будет неточной (смещенной) и она будет меньше, чем истинная дисперсия.
 * Нескорректированная выборочная дисперсия ($s_{нк}^2$) будет равна сумме дисперсии генеральной совокупности - дисперсии среднего арифметического. Исходя из этой информации мы можем ее скорректировать, вычтя из нее неточность определения среднего.
 $$
 \begin{align}
-s_{нк}^2 & = \sigma^2 - s_{\bar{x}}^2
+s_{нк}^2 & = \sigma^2 - s_{\overline{x}}^2
 & = \
 \\
-\sigma^2 & = s_{нк}^2 - s_{\bar{x}}^2 \\
+\sigma^2 & = s_{нк}^2 - s_{\overline{x}}^2 \\
 & = s_{нк}^2 - \frac{s_{нк}^2}{n} \\
 & = s_{нк}^2 \cdot \left( \frac{n-1}{n} \right) \\
-& = \frac{\sum_{i=1}^n(x_i-\bar{x})^2}{n} \cdot \left( \frac{n-1}{n} \right) \\
-& = \frac{\sum_{i=1}^n(x_i-\bar{x})^2}{n-1}
+& = \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n} \cdot \left( \frac{n-1}{n} \right) \\
+& = \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n-1}
 \end{align}
 $$
 
 ##  Еще мысли
 
 
-For me, another piece of intuition is that using $\bar{X}$ instead of $\mu$ introduces bias. And this bias is exactly equal to $\mathbf{E}\left[\left(\bar{X}-\mu\right)^{2}\right]=\frac{\sigma^2}{n}$.
+For me, another piece of intuition is that using $\overline{X}$ instead of $\mu$ introduces bias. And this bias is exactly equal to $\mathbf{E}\left[\left(\overline{X}-\mu\right)^{2}\right]=\frac{\sigma^2}{n}$.
 
 ## Формальное доказательство
 
@@ -181,6 +232,7 @@ $$
 &= \frac{\sigma^2}{n}
 \end{align}
 $$
+
 Таким образом, мат.ожидание смещенной оценки будет 
 $$
 \operatorname{E} \left[ s^2_\text{biased} \right] = \sigma^2 - \frac{\sigma^2}{n} = \frac{n-1}{n} \sigma^2
