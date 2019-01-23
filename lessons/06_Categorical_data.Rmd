@@ -7,6 +7,13 @@ date: "`r format(Sys.Date(), '%Y.%m.%d')`"
 source("../style.R")
 ```
 
+Загружаем нужные библиотеки
+
+```{r}
+library(tidyverse)
+library(magrittr)
+```
+
 # Категориальные переменные
 
 * Группы наблюдений/объектоы, которым можно дать названия (географические локации, белые/черные/латиносы, мужчины/женщины)
@@ -15,36 +22,40 @@ source("../style.R")
 
 Категориальными могут быть как предсказывающие переменные (predictors), так и предсказываемые переменные (исходы, outcomes). Например, мы по категориальным переменным, отражающим морфологию раковых клеток, можем предсказать доброкачественной или злокачественной является опухоль.
 
-# Сравнение частот событий
+# Сравнение частот событий (долей)
 
-Если у нас категориальные 
+Если у нас категориальные переменные как предикторы, так и предсказываемые, то мы можем анализировать сопряженность между значениями этих переменных (как бы корреляции).
 
 ```{r}
-library(tidyverse)
-library(magrittr)
+library(mlbench)
+data("BreastCancer")
 
-bc_data = rio::import("http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/breast-cancer-wisconsin.data", format = "csv", h=F)
-colnames(bc_data) <- c("sample_code_number", 
-                       "clump_thickness", 
-                       "uniformity_of_cell_size", 
-                       "uniformity_of_cell_shape", 
-                       "marginal_adhesion", 
-                       "single_epithelial_cell_size", 
-                       "bare_nuclei", 
-                       "bland_chromatin", 
-                       "normal_nucleoli", 
-                       "mitosis", 
-                       "classes")
-bc_data$classes <- ifelse(bc_data$classes == "2", "benign",
-                          ifelse(bc_data$classes == "4", "malignant", NA))
-bc_data[bc_data == "?"] <- NA
-
-bc_data %>% str()
-
-bc_data$bare_nuclei = as.numeric(bc_data$bare_nuclei)
-
-bc_data %>% select(classes, bare_nuclei) %>% table()
+bct = BreastCancer %>% select(Class, Bare.nuclei) %>% table()
+bct
 ```
+
+Из данных цифр видно, что для злокачественных опухолей характерны более высокие индексы переменной Bare.nuclei (много ядер без цитоплазмы). Оставим только две категории в Bare.nuclei: мало и много ядер. Чтобы оперировать с частотами удобно видеть общее количество измерений в каждой категории. Это легко можно посчитать в R.
+
+```{r}
+bct = BreastCancer %>% 
+  select(Class, Bare.nuclei) %>% 
+  mutate(Bare.nuclei = Bare.nuclei %>% as.numeric() %>% cut(c(0,5, 10))) %>%
+  table()
+bct %>% addmargins()
+```
+
+Теперь видно, что частота встречаемости индекса 1 среди доброкачественных опухолей составляет 387/444, при этом в 387 случаев из 402, когда встречается индекс 1 он соотствествует доброкачественным опухолям. Проверить наличие зависимости между переменной Class и Bare.nuclei можно при помощи $\chi^2$-теста (т.к. выборка довольно большая) или при помощи точного теста Фишера (он всегда годится).
+
+```{r}
+bc_chi = bct %>% chisq.test()
+```
+
+Тест $\chi^2$ проверяет, отличаются ли наблюдаемые частоты от ожидаемых, если бы не было зависимости.
+
+```{r}
+bc_chi$expected %>% addmargins() %>% round()
+```
+
 # Биномиальное распределение
 
 Если есть $n$ объектов (или событий), которым могут соответствовать 2 состояния (0/1, TRUE/FALSE, success/failure) и каждый объект может с определенной вероятностью находиться в каждом состоянии.
