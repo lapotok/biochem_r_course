@@ -1,0 +1,6 @@
+.reveal p, .reveal li {font-size: 24pt;}
+.reveal section.present > h3 {color: #0070C0;}
+.reveal pre code, .reveal code {font-family: CMU TypeWriter Text, Consolas, Courier;}
+.reveal pre code {font-size: 20pt;}
+.section .reveal .state-background {background: white;}
+.section .reveal h1, .section .reveal h2, .section .reveal p {color: black;}

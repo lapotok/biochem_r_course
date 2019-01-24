@@ -6,7 +6,8 @@ knitr::opts_chunk$set(fig.align  = "center",
                       comment    = "", 
                       warning    = F,
                       message    = F,
-                      cache      = T)
+                      cache      = T,
+                      dev        = "svg")
 options(
   width = 100
 )
