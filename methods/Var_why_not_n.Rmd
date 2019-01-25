@@ -120,12 +120,14 @@ $$
 
 $$
 \begin{align} 
-\operatorname{E} \left[ \sigma^2 - s_\text{biased}^2 \right] &= \operatorname{E}\left[  (\overline{x}   - \mu)^2 \right] \\
+\underset{\sigma^{2}}{\underbrace{\operatorname{E}\left[\left(x_{i}-\mu\right)^{2}\right]}}-\underset{s_\text{biased}^2}{\underbrace{\operatorname{E}\left[\left(x_{i}-\overline{x}\right)^{2}\right]}} &= \\
+&= \operatorname{E}\left[  (\overline{x}   - \mu)^2 \right] \\
 &= \operatorname{Var} (\overline{x}) \\
 &= \frac{\sigma^2}{n}
 \end{align}
 $$
 
+Отсюда можно выразить поправку - как нужно скорректировать формулу смещенной выборочной дисперсии, чтобы она соответствовала истинной дисперсии.
 
 $$
 \begin{align}
@@ -135,111 +137,13 @@ $$
 &=\frac{n-1}{n}\cdot\sigma^2
 \end{align}
 $$
-Поэтому
 
-$$
-\begin{align}
-\sigma^2 &= s_\text{unbiased} \\
-&=\frac{n}{n-1}\cdot s_\text{biased}^2\\
-&=\frac{n}{n-1}\cdot \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n}\\
-&=\frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n-1}
-\end{align}
-$$
-
-
-$$
-\begin{align}
-s_\text{biased}^2 - s_\text{unbiased}^2 &= s_\text{biased}^2 - \sigma^2\\
-&=
-\end{align}
-
-
-\\
-\\
-\\
-\sigma^2 = s_\text{unbiased}^2 = s_\text{biased}^2 + s_{\overline{x}}^2
-$$
-
-Эта разница представляет собой неточность определения среднего в выборке ($\overline{x}$ - среднее арифметическое) и соответствует дисперсии среднего арифметического $s_{\overline{x}}^2 = \frac{\sigma^2}{n}$ (корень из нее - стандартной ошибкой среднего, $SEM=\frac{\sigma}{\sqrt{n}}$).
-
-Таким образом, 
-
-$$
-\begin{align}
-s_\text{biased}^2 &= s_{\overline{x}}^2 - \sigma^2 \\
-&= \frac{\sigma^2}{n} - \sigma^2 \\
-&= \frac{}{}
-\end{align}
-$$
-
-Итак, у нас есть неправильная (смещенная, biased) оценка выборочной дисперсии $s_\text{biased}^2$. А теперь выведем формулу правильной (несмещенной, unbiased) оценки выборочной дисперсии $s_\text{unbiased}^2$.
-
-
-Мысль: 
-
-$$\begin{array}{c}
-\mbox{Отклонения }\\
-x_{i}\mbox{ от }\mu.
-\end{array}=\begin{array}{c}
-\mbox{Отклонения}\\
-x_{i}\mbox{ от }\overline{x}
-\end{array}+\begin{array}{c}
-\mbox{Отклонения}\\
-\overline{x}\mbox{ от }\mu
-\end{array}$$
-
-может быть записана в виде следующей формулы
-
-$$\mathbf{E}\left[\left(x_{i}-\mu\right)^{2}\right]=\mathbf{E}\left[\left(x_{i}-\overline{x}\right)^{2}\right]+\mathbf{E}\left[\left(\overline{x}-\mu\right)^{2}\right]$$
-
-что можно переписать в виде
-
-$$\mathbf{E}\left[\left(x_{i}-\overline{x}\right)^{2}\right]=\underset{\sigma^{2}}{\underbrace{\mathbf{E}\left[\left(x_{i}-\mu\right)^{2}\right]}}-\underset{\frac{\sigma^{2}}{n}}{\underbrace{\mathbf{E}\left[\left(\overline{x}-\mu\right)^{2}\right]}}=\frac{n-1}{n}\sigma^2.$$
-
-Таким образом, если посчитать выборочную дисперсию по формуле дисперсии генеральной совокупности (нескорректированная выборочная дисперсия), она будет неточной (смещенной) и она будет меньше, чем истинная дисперсия.
-* Нескорректированная выборочная дисперсия ($s_{нк}^2$) будет равна сумме дисперсии генеральной совокупности - дисперсии среднего арифметического. Исходя из этой информации мы можем ее скорректировать, вычтя из нее неточность определения среднего.
-$$
-\begin{align}
-s_{нк}^2 & = \sigma^2 - s_{\overline{x}}^2
-& = \
-\\
-\sigma^2 & = s_{нк}^2 - s_{\overline{x}}^2 \\
-& = s_{нк}^2 - \frac{s_{нк}^2}{n} \\
-& = s_{нк}^2 \cdot \left( \frac{n-1}{n} \right) \\
-& = \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n} \cdot \left( \frac{n-1}{n} \right) \\
-& = \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n-1}
-\end{align}
-$$
-
-##  Еще мысли
-
-
-For me, another piece of intuition is that using $\overline{X}$ instead of $\mu$ introduces bias. And this bias is exactly equal to $\mathbf{E}\left[\left(\overline{X}-\mu\right)^{2}\right]=\frac{\sigma^2}{n}$.
-
-## Формальное доказательство
-
-Выводим формулу для мат.ожидания расхождения между смещенной оценкой истинной дисперсии ($s_\text{biased}^2$) и самой истинной дисперсией ($\sigma^2$)
-
-$$
-\begin{align} 
-\operatorname{E} \left[ \sigma^2 - s_\text{biased}^2 \right] &= \operatorname{E}\left[ \frac{1}{n} \sum_{i=1}^n(x_i - \mu)^2 - \frac{1}{n}\sum_{i=1}^n (x_i - \overline{x})^2 \right] \\
-&= \frac{1}{n} \operatorname{E}\left[ \sum_{i=1}^n\left((x_i^2 - 2 x_i \mu + \mu^2) - (x_i^2 - 2 x_i \overline{x} + \overline{x}^2)\right) \right] \\
-&= \operatorname{E}\left[  \mu^2 - \overline{x}^2 + \frac{1}{n} \sum_{i=1}^n(2 x_i (\overline{x} - \mu)) \right] \\
-&= \operatorname{E}\left[  \mu^2 - \overline{x}^2 + 2(\overline{x} - \mu) \overline{x} \right] \\
-&= \operatorname{E}\left[  \mu^2 - 2 \overline{x} \mu + \overline{x}^2 \right] \\
-&= \operatorname{E}\left[  (\overline{x}   - \mu)^2 \right] \\
-&= \operatorname{Var} (\overline{x}) \\
-&= \frac{\sigma^2}{n}
-\end{align}
-$$
-
-Таким образом, мат.ожидание смещенной оценки будет 
-$$
-\operatorname{E} \left[ s^2_\text{biased} \right] = \sigma^2 - \frac{\sigma^2}{n} = \frac{n-1}{n} \sigma^2
-$$
 Значит несмещенную оценку истинной дисперсии можно почитать по формуле
-$$
-s_\text{unbiased}^2 = \frac{n}{n-1} s_\text{biased}^2
-$$
 
-Дополнительную информацию можно получить по ссылке про [поправку Бесселя](https://en.wikipedia.org/wiki/Bessel%27s_correction).
+$$
+\begin{align}
+s_\text{unbiased}^2 &= \frac{n}{n-1} \cdot s_\text{biased}^2 \\
+&= \frac{n}{n-1} \cdot\frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n} \\
+&= \frac{\sum_{i=1}^n(x_i-\overline{x})^2}{n-1}
+\end{align}
+$$
