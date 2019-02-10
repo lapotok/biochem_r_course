@@ -1,0 +1,58 @@
+---
+title: "Ковариационная матрица регрессионных коэффициентов"
+date: "`r format(Sys.Date(), '%Y.%m.%d')`"
+---
+
+```{r setup, include=FALSE}
+source("../style.R")
+```
+
+В курсе про регрессию пишут, что ковариационная матрица для коэффициентов регрессии нужна для рассчета стандартных ошибок оценки.
+Но как себе представить ковариацию коэффициентов? На самом деле, их истинных значений с нулевой вариацией мы не знаем, а знаем лишь оценки на основе данных. Т.е. сами коэффициенты являются случайными величинами, которые мы оцениваем. А посему точность их оценки может быть изучена.
+
+```{r echo = T, eval = T, message=F, warning=F}
+library(tidyverse)
+library(ggplot2)
+
+
+swiss_scaled = swiss %>% mutate_all(scale)
+ms = lm(Fertility ~ ., swiss_scaled)
+ms %>% summary
+vcov(ms) %>% round(3)
+
+# а еще посмотрим на зависимости между переменными
+ms2 = lm(Fertility ~ (.)^2, swiss_scaled)
+ms2 %>% summary
+```
+
+Можно теперь нагенерить разных оценок коэффициентов регрессии из разных подвыборок методом бутстрепа и посмотреть на зависимость оценок одних коэффициентов от других. По идее, это должно идейно напоминать матрицу ковариции.
+
+```{r echo = T, eval = T, fig.height=7, fig.width=7}
+R = 1000
+numbers = 1:nrow(swiss_scaled)
+regressors = swiss_scaled %>% colnames()
+regressors[1] = "(Intercept)"
+coef_df = data.frame(R     = numeric(),
+                     Coeff = character(),
+                     Val   = numeric(), stringsAsFactors = F)
+count = 1
+for (i in 1:R){
+  m_current = lm(Fertility ~ ., swiss_scaled[sample(numbers, replace = T),]) %>% coefficients()
+  for (regr in regressors){
+    coef_df[count,"R"] = i
+    coef_df[count,"Coeff"] = regr
+    coef_df[count,"Val"] = m_current[regr]
+    count = count + 1
+  }
+}
+
+vcov(ms) %>% round(3)
+
+library(GGally)
+coef_df_w = coef_df %>% spread(Coeff, Val) %>% select(-R) 
+
+cov(coef_df_w) %>% round(3)
+vcov(ms) %>% round(3)
+
+ggpairs(coef_df_w)
+```
