@@ -1,37 +1,3 @@
-# source script
-# source("https://docs.google.com/document/export?format=txt&id=11wna4Fq9oziZ2gsOdLxywyS5cRaOCazqBqaGeo7-f6w")
-
-# get table
-# rio::import("https://drive.google.com/uc?authuser=0&id=1oCvunUF1ajetOnyvxgfZVPlIrVeCEi6s&export=download", format="xlsx")
-#d = rio::import("https://drive.google.com/uc?authuser=0&id=1TkxlJs8t8jwve-ZX7Bw6f1j4kx_F0Wh8&export=csv")
-abu = rio::import("~/Downloads/Vietnam_Abundance__.xlsx")
-
-
-abu1 =
-  abu %>%
-  naniar::replace_with_na_all(~.x == "na") %>%
-  mutate_if(is.character, as.factor) %>%
-  mutate_at(vars(starts_with("Ch_")), as.numeric) %>%
-  mutate(Ch_sumNA = Ch_ear+Ch_urgen+Ch_belly+Ch_nose_eye+Ch_chin) %>%
-  mutate(Ch_sumNA1 = ifelse(Ch_sumNA > 0, 1,0))
-
-abu1 %>% str()
-abu1 %>% View()
-
-# total
-abu1_year_totals = 
-  abu1 %>% 
-  filter(Coll == "exp") %>%
-  group_by(Year) %>%
-  summarise(n = n())
-#infested
-abu1_year_infested = 
-  abu1 %>% 
-  filter(Coll == "exp" &
-                  Ch_sumNA > 0) %>%
-  group_by(Year) %>%
-  summarise(n = n())
-
 ############### DATA PREP ############### 
 
 # load the data
@@ -71,6 +37,50 @@ abu_infested %>%
   ggpubr::gghistogram("Ch_sumNA", facet.by = "Host_species", bins = 30) + 
   scale_y_continuous(trans="sqrt") + # sqrt transform Y axis
   theme_bw()
+
+
+species_rename = function(species_names){
+  new_species_names = species_names
+  for(i in 1:length(species_names)){
+    sns = str_split_fixed(species_names[i], " ", 2)
+    new_species_names[i] = paste0(substr(sns[1], 1, 1), ". ", substr(sns[2], 1, 10))
+  }
+  return(new_species_names)
+}
+abu_infested = 
+  abu_infested %>% 
+  mutate(Host_species = as.character(Host_species),
+         Host_species = species_rename(Host_species),
+         Host_species = as.factor(Host_species))
+
+g_2011 = abu_infested %>% 
+  filter(Year == 2011) %>% 
+  ggpubr::gghistogram("Ch_sumNA", facet.by = "Host_species", bins = 30) + 
+  scale_y_continuous(trans="sqrt") + # sqrt transform Y axis
+  theme_bw()
+g_2014 = abu_infested %>% 
+  filter(Year == 2014) %>% 
+  ggpubr::gghistogram("Ch_sumNA", facet.by = "Host_species", bins = 30) + 
+  scale_y_continuous(trans="sqrt") + # sqrt transform Y axis
+  theme_bw()
+g_2015 = abu_infested %>% 
+  filter(Year == 2015) %>% 
+  ggpubr::gghistogram("Ch_sumNA", facet.by = "Host_species", bins = 30) + 
+  scale_y_continuous(trans="sqrt") + # sqrt transform Y axis
+  theme_bw()
+g_2017 = abu_infested %>% 
+  filter(Year == 2017) %>% 
+  ggpubr::gghistogram("Ch_sumNA", facet.by = "Host_species", bins = 30) + 
+  scale_y_continuous(trans="sqrt") + # sqrt transform Y axis
+  theme_bw()
+g_2018 = abu_infested %>% 
+  filter(Year == 2018) %>% 
+  ggpubr::gghistogram("Ch_sumNA", facet.by = "Host_species", bins = 30) + 
+  scale_y_continuous(trans="sqrt") + # sqrt transform Y axis
+  theme_bw()
+
+cowplot::plot_grid(g_2011, g_2014, g_2015, g_2017, g_2018, labels = c("2011", "2014", "2015", "2017", "2018"))
+
 
 ############### INTENSITY BCI ############### 
 
